@@ -2,6 +2,7 @@
 .clasprc.json
 .clasprc.json.*
 .clasp.json
+.clasp.json.*
 credentials.json
 client_secret*.json
 client_id*.json
@@ -37,3 +38,4 @@ dist/
 build/
 .cache/
 *.tsbuildinfo
+

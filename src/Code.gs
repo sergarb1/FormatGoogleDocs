@@ -136,7 +136,7 @@ function procesarTablas() {
         const cell = row.getCell(c);
 
         if (esCabecera) {
-          cell.setBackgroundColor('#f1f3f4');
+          cell.setBackgroundColor('#dadce0');
         } else {
           cell.setBackgroundColor(null);
         }

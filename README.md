@@ -8,7 +8,7 @@ Script de **Google Apps Script** que limpia y normaliza documentos de Google Doc
   - Numérico: `1.`, `1.1`, `1.1.1`, `1 -`, etc.
   - Markdown: `#`, `##`, `###`
   - Ambos (recomendado) o expresiones regulares personalizadas
-- **Tablas de datos**: trim de espacios en celdas, cabecera en **negrita + centrada + gris**, resto **justificado y sin fondo** (ignora tablas 1×1)
+- **Tablas de datos**: trim de espacios en celdas, cabecera en **negrita + centrada + gris** (`#dadce0`), resto **justificado y sin fondo** (ignora tablas 1×1)
 - **Protección de CodeBlocks**: detecta tablas 1×1 y fuentes monoespaciadas (`Consolas`, `Courier New`, `Roboto Mono`, `Fira Code`, `JetBrains Mono`…) y no les aplica formato de cuerpo
 - **Cuerpo de texto** por defecto: **Calibri 12, justificado**, interlineado 1.15 (todo configurable)
 - **Limpieza de párrafos vacíos** consecutivos
@@ -135,6 +135,8 @@ clasp logs --watch
 ```
 
 `clasp clone` crea `.clasp.json` con ese ID: **está en `.gitignore`** (no se commitea; el ID y credenciales no suben al repo).
+
+> 🔒 **Nunca pegues el ID del script en archivos del repo** (`README`, `Code.gs`, `package.json`…). Vive solo en `.clasp.json` / `.clasprc.json`, ambos ignorados por git.
 
 También puedes usar el **Debug** del editor de Apps Script (icono insecto) para breakpoints visuales.
 
