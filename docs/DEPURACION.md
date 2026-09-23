@@ -66,9 +66,9 @@ copia solo la parte entre `/d/` y `/edit`.
 clasp clone "AQUI_TU_ID_DE_SCRIPT"
 ```
 
-Esto descargará tu código (p. ej. `Code.js`) y un `appsscript.json`. El `.clasp.json` generado contiene el ID: **ya está en `.gitignore`**.
+Esto descargará tu código y un `appsscript.json`. El `.clasp.json` generado contiene el ID: **ya está en `.gitignore`**.
 
-> Para este repo, el archivo fuente canónico es `src/Code.gs`. Tras `clasp clone`, alinea el nombre de archivo con lo que espera tu proyecto clasp (`Code.js` / `Code.gs`) y usa `clasp push` para subir cambios.
+> Para este repo, los fuentes canónicos son los `.gs` de `src/` (`config`, `utilidades`, `titulos`, `tablas`, `cuerpo`, `ui`) + `appsscript.json`. `clasp push` con `rootDir: src` sube todos los ficheros; no hace falta `clasp clone` si ya tienes el repo.
 
 ## 4. Flujo de depuración con la IA
 
@@ -80,27 +80,23 @@ Prompt de sistema / instrucción inicial para OpenCode:
 > 3. Pídeme que ejecute el script en Google Docs.
 > 4. Tras ejecutarlo, usa `clasp logs` para leer los resultados de mis `console.log()` o los errores del sistema y corregir el código.
 
-### Logs en tiempo real
+### Logs sin depender de `clasp logs` (recomendado)
+
+Este proyecto **no asume** que `clasp logs` esté configurado (Cloud Logging / projectId GCP).
+
+1. Los debug usan `fpLog()` → se acumulan en memoria. El diálogo automático está **desactivado por defecto** (`CONFIG.DEBUG_MOSTRAR_DIALOGO: false`); se reactiva poniendo `true` en `src/config.gs`.
+2. Menú **📋 Ver resumen** reabre las últimas líneas (guardadas en `DocumentProperties`) bajo demanda.
+3. Para que OpenCode las lea: el usuario hace captura o copia el texto del diálogo y lo pega en el chat.
+
+`console.log` (y por tanto `clasp logs`, si algún día funciona) sigue recibiendo lo mismo vía `fpLog`.
+
+### Si quieres probar `clasp logs` (opcional)
 
 ```bash
 clasp logs --watch
 ```
 
-Los `console.log()` de este proyecto (con `CONFIG.DEBUG_TIEMPOS: true`) aparecen con el prefijo:
-
-```
-[Formato Pro] limpiarEstilosCopiados: 1204ms
-```
-
-### Si el log está vacío
-
-`clasp logs` usa **Cloud Logging**, no el Logger antiguo. Si es la primera vez:
-
-```bash
-clasp setup-logs
-```
-
-(Requiere asociar un projectId de GCP al script — ver docs de clasp.)
+Requiere `clasp setup-logs` + projectId de GCP (ver docs de clasp). **No es obligatorio** para este flujo.
 
 ## 5. Debug visual en el editor de Apps Script
 

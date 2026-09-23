@@ -14,14 +14,15 @@ Copia este prompt completo y pégalo en tu agente de IA antes de pedirle una mod
 2. Mantén la arquitectura modular actual separada por responsabilidades (Títulos, Tablas, Cuerpo, Fuente, Limpieza de vacíos, Limpieza de estilos).
 3. Utiliza únicamente métodos nativos de `DocumentApp.getActiveDocument().getBody()`.
 4. Toda configuración editable por el usuario va en el objeto `CONFIG` o en `PRESETS_TITULOS`.
-5. Al añadir una función de menú: registrarla en `onOpen()`, nombrarla en infinitivo español, y actualizar `README.md` + `AGENTS.md`.
-6. El script debe permanecer en un único archivo `src/Code.gs`.
-7. No añadas librerías externas ni `UrlFetchApp` sin petición explícita.
-8. **Depuración:** prefiere `console.log` / `CONFIG.DEBUG_TIEMPOS`; el flujo con `clasp push` + `clasp logs` está en [`DEPURACION.md`](DEPURACION.md). Respeta `@types/google-apps-script` (no inventes APIs de `DocumentApp`).
+5. Al añadir una función de menú: registrarla en `onOpen()` en el submenú adecuado (📑/📊/📝 o raíz), nombrarla en infinitivo español, y actualizar `README.md` + `AGENTS.md`.
+6. El script vive en varios `.gs` bajo `src/` (`config`, `utilidades`, `logs`, `titulos`, `tablas`, `cuerpo`, `ui`) — respetar esa separación; `clasp push` los sube todos y GAS comparte ámbito global.
+7. No añadas librerías externas ni `UrlFetchApp` sin petición explícita (Docs API avanzada solo si `CONFIG.USAR_DOCS_API_BORDES` y el usuario la pide).
+8. **Interlineados:** cuerpo = `CONFIG.INTERLINEADO` (1.15); tablas de datos = `CONFIG.INTERLINEADO_TABLA` (1.5). No unificarlos.
+9. **Depuración:** usa `fpLog()` (`src/logs.gs`); el diálogo automático está **desactivado** por defecto (`DEBUG_MOSTRAR_DIALOGO: false`). Menú *📋 Ver resumen*. No depender de `clasp logs`. Respeta `@types/google-apps-script` (no inventes APIs de `DocumentApp` ni del schema Docs API).
 
 **Código actual:**
 
-`[Pega aquí el contenido completo de src/Code.gs]`
+`[Pega aquí el contenido de los .gs de src/ relevantes a la tarea]`
 
 **Nueva tarea a implementar:**
 
@@ -36,3 +37,5 @@ Copia este prompt completo y pégalo en tu agente de IA antes de pedirle una mod
 - "Añade una opción de menú '7. Exportar resumen de estilos' que cuente párrafos por tipo de heading."
 - "Cambia el diálogo de configuración para incluir un campo de color de cabecera de tabla."
 - "Haz que `limpiarEstilosCopiados` también elimine el cursiva heredada del pegado en texto normal."
+- "Haz que `eliminarParrafosVacios` borre viñetas (`LIST_ITEM`) sin texto sin mover el párrafo siguiente."
+- "Haz que `recortarEspaciosLaterales` respete tablas 1x1 y fuentes monoespaciadas (no recortar código)."

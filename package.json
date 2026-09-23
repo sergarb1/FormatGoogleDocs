@@ -5,7 +5,7 @@
   "private": true,
   "license": "AGPL-3.0-only",
   "scripts": {
-    "check": "node -e \"require('fs').copyFileSync('src/Code.gs','/tmp/Code_check.js')\" && node --check /tmp/Code_check.js",
+    "check": "node -e \"const fs=require('fs');const os=require('os');const p=require('path');const d=fs.mkdtempSync(p.join(os.tmpdir(),'gas-'));const files=fs.readdirSync('src').filter(f=>f.endsWith('.gs'));if(!files.length){console.error('no .gs files');process.exit(1);}files.forEach((f,i)=>{const dst=p.join(d,'m'+i+'.js');fs.copyFileSync(p.join('src',f),dst);require('child_process').execFileSync(process.execPath,['--check',dst],{stdio:'inherit'});});fs.rmSync(d,{recursive:true,force:true});console.log('syntax OK ('+files.length+' files)')\"",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "devDependencies": {
