@@ -43,9 +43,10 @@ Script modular en GAS para **limpiar y normalizar documentos** generados al copi
 | `procesarTablas()` | módulo 2 | Formatea tablas de datos, ignora 1x1 |
 | `normalizarCuerpo()` | módulo 3 | Fuente, tamaño, alineación, interlineado del texto normal |
 | `aplicarFuenteCuerpo()` | módulo 4 | Solo tipografía/alineación del cuerpo |
-| `eliminarParrafosVacios()` | módulo 5 | Borra párrafos en blanco consecutivos |
+| `eliminarParrafosVacios()` | módulo 5 | Borra párrafos en blanco consecutivos (nunca el último de una sección) |
 | `limpiarEstilosCopiados()` | módulo 6 | Limpia fondos, subrayados, tamaños heredados (incl. tablas 1x1) |
 | `limpiarParrafos()` | aux módulo 6 | Lógica por párrafo; distingue código vs normal |
+| `trimParrafo(paragraph)` | util | Quita espacios iniciales/finales preservando formato de runs |
 | `esTablaCodeBlock(table)` | util | true si tabla 1x1 |
 | `esTextoCodigo(paragraph)` | util | true si fuente monoespaciada |
 | `mostrarDialogoConfig()` | UI | Modal de configuración |
@@ -63,3 +64,16 @@ Script modular en GAS para **limpiar y normalizar documentos** generados al copi
 ## Prompt maestro
 
 Para tareas de mantenimiento/iteración con un agente, usa el prompt de [`docs/PROMPT_MAESTRO.md`](docs/PROMPT_MAESTRO.md).
+
+## Depuración (clasp + logs)
+
+Flujo profesional OpenCode ↔ GAS documentado en [`docs/DEPURACION.md`](docs/DEPURACION.md):
+
+1. Modificar `src/Code.gs` (o el `.js` local si hay proyecto clasp).
+2. Usar `console.log()` / `CONFIG.DEBUG_TIEMPOS` para instrumentar.
+3. `clasp push` → ejecutar en Google Docs → `clasp logs --watch`.
+4. Corregir según el error real de Cloud Logging (no inventar APIs).
+
+**Regla de logs:** preferir `console.log` / `console.time` (compatible con `clasp logs`). `Logger.log` solo si el usuario lo pide.
+
+**Tipos:** el repo incluye `@types/google-apps-script` en `package.json` — al modificar el script, respetar la API real de `DocumentApp` (no inventar métodos).

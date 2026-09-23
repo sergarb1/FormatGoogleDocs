@@ -1,0 +1,39 @@
+# --- Credenciales / datos personales (NUNCA subir) ---
+.clasprc.json
+.clasprc.json.*
+.clasp.json
+credentials.json
+client_secret*.json
+client_id*.json
+service_account*.json
+*.pem
+*.key
+*.p12
+.env
+.env.*
+*.local.json
+
+# --- Node ---
+node_modules/
+npm-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# --- Logs / OS ---
+*.log
+logs/
+.DS_Store
+Thumbs.db
+
+# --- Editors ---
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
+*~
+
+# --- Build / cache ---
+dist/
+build/
+.cache/
+*.tsbuildinfo

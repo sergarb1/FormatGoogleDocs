@@ -17,6 +17,7 @@ Copia este prompt completo y pégalo en tu agente de IA antes de pedirle una mod
 5. Al añadir una función de menú: registrarla en `onOpen()`, nombrarla en infinitivo español, y actualizar `README.md` + `AGENTS.md`.
 6. El script debe permanecer en un único archivo `src/Code.gs`.
 7. No añadas librerías externas ni `UrlFetchApp` sin petición explícita.
+8. **Depuración:** prefiere `console.log` / `CONFIG.DEBUG_TIEMPOS`; el flujo con `clasp push` + `clasp logs` está en [`DEPURACION.md`](DEPURACION.md). Respeta `@types/google-apps-script` (no inventes APIs de `DocumentApp`).
 
 **Código actual:**
 

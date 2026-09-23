@@ -35,7 +35,10 @@ const CONFIG = {
   ],
 
   // Tablas 1x1 asumidas como CodeBlock (no se les aplica formato de tabla)
-  TRATAR_TABLA_1X1_COMO_CODIGO: true
+  TRATAR_TABLA_1X1_COMO_CODIGO: true,
+
+  // Logs de tiempo por módulo (ver Execution log en Apps Script)
+  DEBUG_TIEMPOS: true
 };
 
 // Presets de expresiones regulares para títulos
@@ -134,24 +137,54 @@ function procesarTablas() {
 
         if (esCabecera) {
           cell.setBackgroundColor('#f1f3f4');
+        } else {
+          cell.setBackgroundColor(null);
         }
 
         for (let p = 0; p < cell.getNumChildren(); p++) {
           const child = cell.getChild(p);
           if (child.getType() === DocumentApp.ElementType.PARAGRAPH) {
             const paragraph = child.asParagraph();
+
+            trimParrafo(paragraph);
+
             paragraph.setLineSpacing(1.0);
             paragraph.setSpacingBefore(0);
             paragraph.setSpacingAfter(0);
 
             if (esCabecera) {
               paragraph.setBold(true);
+              paragraph.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
+            } else {
+              paragraph.setBold(false);
+              paragraph.setAlignment(DocumentApp.HorizontalAlignment.JUSTIFY);
             }
           }
         }
       }
     }
   });
+}
+
+// Elimina espacios iniciales/finales de un párrafo sin perder el formato de los runs restantes
+function trimParrafo(paragraph) {
+  const texto = paragraph.getText();
+  if (texto === texto.trim()) return;
+  if (texto.trim().length === 0) return;
+
+  const et = paragraph.editAsText();
+
+  // Primero espacios finales (índices más altos) para no desplazar el resto
+  const finales = texto.length - texto.replace(/\s+$/, '').length;
+  if (finales > 0) {
+    et.deleteText(texto.length - finales, texto.length - 1);
+  }
+
+  const textoSinFinales = texto.substring(0, texto.length - finales);
+  const iniciales = textoSinFinales.length - textoSinFinales.replace(/^\s+/, '').length;
+  if (iniciales > 0) {
+    et.deleteText(0, iniciales - 1);
+  }
 }
 
 // ==========================================
@@ -200,12 +233,23 @@ function aplicarFuenteCuerpo() {
 // MÓDULO 5: LIMPIEZA DE PÁRRAFOS VACÍOS
 // ==========================================
 function eliminarParrafosVacios() {
-  const paragraphs = DocumentApp.getActiveDocument().getBody().getParagraphs();
+  const body = DocumentApp.getActiveDocument().getBody();
+  const paragraphs = body.getParagraphs();
 
   for (let i = paragraphs.length - 1; i >= 0; i--) {
     const p = paragraphs[i];
-    if (p.getText().trim() === '' && p.getNumChildren() === 0) {
+    if (p.getText().trim() !== '' || p.getNumChildren() > 0) continue;
+
+    const parent = p.getParent();
+    // No intentar eliminar si es el único hijo de su contenedor (body, sección o celda)
+    if (parent && parent.getNumChildren() <= 1) continue;
+    // No eliminar el último párrafo vivo del documento
+    if (parent === body && body.getNumChildren() <= 1) continue;
+
+    try {
       p.removeFromParent();
+    } catch (e) {
+      // Google Docs no permite eliminar el último párrafo de una sección
     }
   }
 }
@@ -277,17 +321,12 @@ function limpiarParrafos(paragraphs) {
       p.setSpacingAfter(4);
     }
 
-    // Normalizar tamaños de fuente dispares en runs de texto (solo si no es código)
-    if (!esCodigo) {
-      const numChars = p.getText().length;
-      if (numChars > 0) {
-        for (let i = 0; i < numChars; i++) {
-          try {
-            p.setFontSize(i, i, CONFIG.TAMAÑO_CUERPO);
-          } catch (e) {
-            // Ignorar rangos no editables (ej. elementos especiales)
-          }
-        }
+    // Normalizar tamaño de fuente con UNA sola llamada (no carácter a carácter)
+    if (!esCodigo && p.getText().length > 0) {
+      try {
+        p.editAsText().setFontSize(CONFIG.TAMAÑO_CUERPO);
+      } catch (e) {
+        // Ignorar párrafos con elementos especiales
       }
     }
   });
@@ -394,10 +433,33 @@ function aplicarConfiguracion(datos) {
 // EJECUCIÓN MAESTRA
 // ==========================================
 function ejecutarLimpiezaTotal() {
+  const ui = DocumentApp.getUi();
+  const marcar = CONFIG.DEBUG_TIEMPOS
+    ? (nombre) => {
+        const t0 = Date.now();
+        return () => console.log('[Formato Pro] %s: %sms', nombre, Date.now() - t0);
+      }
+    : () => () => {};
+
+  let fin = marcar('eliminarParrafosVacios');
   eliminarParrafosVacios();
+  fin();
+
+  fin = marcar('limpiarEstilosCopiados');
   limpiarEstilosCopiados();
+  fin();
+
+  fin = marcar('procesarTitulos');
   procesarTitulos();
+  fin();
+
+  fin = marcar('procesarTablas');
   procesarTablas();
+  fin();
+
+  fin = marcar('normalizarCuerpo');
   normalizarCuerpo();
-  DocumentApp.getUi().alert('✨ Proceso completado. Documento estructurado correctamente.');
+  fin();
+
+  ui.alert('✨ Proceso completado. Tiempos por módulo en Execution log (si DEBUG_TIEMPOS).');
 }

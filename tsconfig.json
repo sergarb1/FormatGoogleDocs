@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2020"],
+    "types": ["google-apps-script"],
+    "strict": false,
+    "noEmit": true,
+    "checkJs": false,
+    "allowJs": true,
+    "skipLibCheck": true
+  },
+  "include": ["src/**/*.gs", "types/**/*.d.ts"]
+}
