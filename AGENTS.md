@@ -68,7 +68,7 @@ Script modular en GAS para **limpiar y normalizar documentos** generados al copi
 | `esBlancoCodigo(cp)` | `src/utilidades.gs` | util | true si el code point es blanco/ZWSP/NBSP/BOM… |
 | `rangosBlancosLaterales(texto)` | `src/utilidades.gs` | util | Rangos `[ini,fin)` de no-blancos laterales |
 | `mostrarDialogoConfig()` | `src/ui.gs` | UI | Modal por secciones (títulos/cuerpo/tablas) con validación y cierre al guardar |
-| `aplicarConfiguracion(datos)` | `src/ui.gs` | UI | Punto de entrada `google.script.run`: aplica el modal a `CONFIG`, persiste en `DocumentProperties` y **siempre** devuelve/error (con timeout en el cliente para no dejarse en «Guardando…») |
+| `aplicarConfiguracion(datos)` | `src/ui.gs` | UI | Punto de entrada `google.script.run`: aplica el modal a `CONFIG`, persiste en `DocumentProperties` y **siempre** devuelve/error. En el cliente usar `withSuccessHandler`/`withFailureHandler` (no `*Callback`) + timeout para no dejarse en «Guardando…» |
 | `cargarConfiguracion()` | `src/config.gs` | util | Carga `DocumentProperties.FP_CONFIG` sobre `CONFIG` (llamar al inicio de cada punto de entrada; GAS es stateless por ejecución) |
 | `guardarConfiguracion()` | `src/config.gs` | util | Persiste campos editables de `CONFIG` en `DocumentProperties` |
 | `ejecutarLimpiezaTotal()` | `src/ui.gs` | maestro | Ejecuta todos los módulos en orden |

@@ -356,8 +356,8 @@ function mostrarDialogoConfig() {
 
         try {
           google.script.run
-            .withSuccessCallback(ok)
-            .withFailureCallback(fail)
+            .withSuccessHandler(ok)
+            .withFailureHandler(fail)
             .aplicarConfiguracion(datos);
         } catch (e) {
           fail(e);
