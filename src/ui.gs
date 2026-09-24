@@ -204,10 +204,10 @@ function mostrarDialogoConfig() {
           <div class="field">
             <label for="alineacion">Alineación</label>
             <select id="alineacion">
-              <option value="JUSTIFY" ${CONFIG.ALINEACION_CUERPO === DocumentApp.HorizontalAlignment.JUSTIFY ? 'selected' : ''}>Justificado</option>
-              <option value="LEFT" ${CONFIG.ALINEACION_CUERPO === DocumentApp.HorizontalAlignment.LEFT ? 'selected' : ''}>Izquierda</option>
-              <option value="CENTER" ${CONFIG.ALINEACION_CUERPO === DocumentApp.HorizontalAlignment.CENTER ? 'selected' : ''}>Centrado</option>
-              <option value="RIGHT" ${CONFIG.ALINEACION_CUERPO === DocumentApp.HorizontalAlignment.RIGHT ? 'selected' : ''}>Derecha</option>
+              <option value="JUSTIFY" ${alineacionEnum(CONFIG.ALINEACION_CUERPO) === DocumentApp.HorizontalAlignment.JUSTIFY ? 'selected' : ''}>Justificado</option>
+              <option value="LEFT" ${alineacionEnum(CONFIG.ALINEACION_CUERPO) === DocumentApp.HorizontalAlignment.LEFT ? 'selected' : ''}>Izquierda</option>
+              <option value="CENTER" ${alineacionEnum(CONFIG.ALINEACION_CUERPO) === DocumentApp.HorizontalAlignment.CENTER ? 'selected' : ''}>Centrado</option>
+              <option value="RIGHT" ${alineacionEnum(CONFIG.ALINEACION_CUERPO) === DocumentApp.HorizontalAlignment.RIGHT ? 'selected' : ''}>Derecha</option>
             </select>
           </div>
           <div class="field" style="max-width: 130px;">
@@ -395,14 +395,8 @@ function aplicarConfiguracion(datos) {
     if (typeof datos.ajustarDim === 'boolean') CONFIG.AJUSTAR_DIMENSIONES_TABLA = datos.ajustarDim;
     if (typeof datos.docsBordes === 'boolean') CONFIG.USAR_DOCS_API_BORDES = datos.docsBordes;
 
-    const mapAlignment = {
-      'JUSTIFY': DocumentApp.HorizontalAlignment.JUSTIFY,
-      'LEFT': DocumentApp.HorizontalAlignment.LEFT,
-      'CENTER': DocumentApp.HorizontalAlignment.CENTER,
-      'RIGHT': DocumentApp.HorizontalAlignment.RIGHT
-    };
-    if (datos.alineacion && mapAlignment[datos.alineacion]) {
-      CONFIG.ALINEACION_CUERPO = mapAlignment[datos.alineacion];
+    if (datos.alineacion) {
+      CONFIG.ALINEACION_CUERPO = alineacionEnum(datos.alineacion);
     }
 
     if (!guardarConfiguracion()) {

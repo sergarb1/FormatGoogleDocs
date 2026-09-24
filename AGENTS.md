@@ -71,6 +71,7 @@ Script modular en GAS para **limpiar y normalizar documentos** generados al copi
 | `aplicarConfiguracion(datos)` | `src/ui.gs` | UI | Punto de entrada `google.script.run`: aplica el modal a `CONFIG`, persiste en `DocumentProperties` y **siempre** devuelve/error. En el cliente usar `withSuccessHandler`/`withFailureHandler` (no `*Callback`) + timeout para no dejarse en «Guardando…» |
 | `cargarConfiguracion()` | `src/config.gs` | util | Carga `DocumentProperties.FP_CONFIG` sobre `CONFIG` (llamar al inicio de cada punto de entrada; GAS es stateless por ejecución) |
 | `guardarConfiguracion()` | `src/config.gs` | util | Persiste campos editables de `CONFIG` en `DocumentProperties` |
+| `alineacionEnum(valor)` | `src/config.gs` | util | `String` `'JUSTIFY'|...` → enum `DocumentApp.HorizontalAlignment` (obligatorio antes de `setAlignment`) |
 | `ejecutarLimpiezaTotal()` | `src/ui.gs` | maestro | Ejecuta todos los módulos en orden |
 | `fpLog()` | `src/logs.gs` | util | Log a consola + buffer en memoria |
 | `fpFinEjecucion(titulo)` | `src/logs.gs` | util | Guarda logs y abre diálogo solo si `DEBUG_MOSTRAR_DIALOGO` (por defecto `false`) |

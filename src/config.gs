@@ -94,6 +94,23 @@ const FP_CONFIG_CLAVES = [
   'DEBUG_MOSTRAR_DIALOGO'
 ];
 
+// Convierte 'JUSTIFY'|'LEFT'|'CENTER'|'RIGHT' (u objecto enum) al enum de DocumentApp.
+// DocumentProperties guarda JSON: ahí solo cabe el String; setAlignment exige HorizontalAlignment.
+function alineacionEnum(valor) {
+  if (valor === DocumentApp.HorizontalAlignment.JUSTIFY ||
+      valor === DocumentApp.HorizontalAlignment.LEFT ||
+      valor === DocumentApp.HorizontalAlignment.CENTER ||
+      valor === DocumentApp.HorizontalAlignment.RIGHT) {
+    return valor;
+  }
+  const clave = String(valor == null ? '' : valor).toUpperCase();
+  if (clave === 'JUSTIFY') return DocumentApp.HorizontalAlignment.JUSTIFY;
+  if (clave === 'LEFT') return DocumentApp.HorizontalAlignment.LEFT;
+  if (clave === 'CENTER') return DocumentApp.HorizontalAlignment.CENTER;
+  if (clave === 'RIGHT') return DocumentApp.HorizontalAlignment.RIGHT;
+  return DocumentApp.HorizontalAlignment.JUSTIFY;
+}
+
 // Carga lo guardado en DocumentProperties sobre CONFIG (idempotente).
 // Se llama al inicio de cada punto de entrada: cada ejecución de GAS es un contenedor nuevo.
 function cargarConfiguracion() {
@@ -108,6 +125,7 @@ function cargarConfiguracion() {
         CONFIG[k] = guardado[k];
       }
     }
+    CONFIG.ALINEACION_CUERPO = alineacionEnum(CONFIG.ALINEACION_CUERPO);
   } catch (e) {
     try { fpLog('[Formato Pro] cargarConfiguracion: %s', e); } catch (e2) {}
   }
@@ -121,6 +139,8 @@ function guardarConfiguracion() {
       const k = FP_CONFIG_CLAVES[i];
       salida[k] = CONFIG[k];
     }
+    // Serializable: solo la clave del enum (el objeto enum no viaja bien en JSON)
+    salida.ALINEACION_CUERPO = String(alineacionEnum(CONFIG.ALINEACION_CUERPO));
     PropertiesService.getDocumentProperties().setProperty(FP_CONFIG_KEY, JSON.stringify(salida));
     return true;
   } catch (e) {

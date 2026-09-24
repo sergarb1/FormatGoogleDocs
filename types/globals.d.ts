@@ -32,5 +32,6 @@ declare const PRESETS_TITULOS: Record<string, { nivel: 1 | 2 | 3; regex: RegExp 
 
 declare function cargarConfiguracion(): void;
 declare function guardarConfiguracion(): boolean;
+declare function alineacionEnum(valor: unknown): GoogleAppsScript.Document.HorizontalAlignment;
 declare function aplicarConfiguracion(datos: Record<string, unknown>): { ok: boolean };
 declare function fpLog(...args: unknown[]): void;

@@ -18,7 +18,7 @@ function normalizarCuerpo() {
       p.setSpacingAfter(CONFIG.ESPACIO_DESPUES);
       p.setFontFamily(CONFIG.FUENTE_CUERPO);
       p.setFontSize(CONFIG.TAMAÑO_CUERPO);
-      p.setAlignment(CONFIG.ALINEACION_CUERPO);
+      p.setAlignment(alineacionEnum(CONFIG.ALINEACION_CUERPO));
     }
   });
 }
@@ -37,7 +37,7 @@ function aplicarFuenteCuerpo() {
 
     p.setFontFamily(CONFIG.FUENTE_CUERPO);
     p.setFontSize(CONFIG.TAMAÑO_CUERPO);
-    p.setAlignment(CONFIG.ALINEACION_CUERPO);
+    p.setAlignment(alineacionEnum(CONFIG.ALINEACION_CUERPO));
   });
 }
 
@@ -154,7 +154,7 @@ function limpiarParrafos(paragraphs) {
     if (!esCodigo) {
       p.setFontFamily(CONFIG.FUENTE_CUERPO);
       p.setFontSize(CONFIG.TAMAÑO_CUERPO);
-      p.setAlignment(CONFIG.ALINEACION_CUERPO);
+      p.setAlignment(alineacionEnum(CONFIG.ALINEACION_CUERPO));
       p.setBackgroundColor(null);
       const links = p.getLinkUrl();
       if (!links) {
