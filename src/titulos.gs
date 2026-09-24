@@ -2,6 +2,7 @@
 // MÓDULO 1: JERARQUÍA DE TÍTULOS
 // ==========================================
 function procesarTitulos() {
+  cargarConfiguracion();
   const body = DocumentApp.getActiveDocument().getBody();
   const paragraphs = body.getParagraphs();
   const patrones = obtenerPatronesTitulo();

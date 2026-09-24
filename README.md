@@ -46,7 +46,7 @@ Script de **Google Apps Script** que limpia y normaliza documentos de Google Doc
 | 📝 Texto del cuerpo → Recortar espacios sobrantes | Quita espacios/tabs sueltos a izquierda/derecha en cuerpo y celdas (no toca código) |
 | 📝 Texto del cuerpo → Solo fuente y alineación | Solo aplica tipografía/alineación sin tocar el resto |
 | 📝 Texto del cuerpo → Limpiar estilos pegados de la web | Quita fondos, subrayados y tamaños heredados del pegado (incluye CodeBlocks) |
-| ⚙️ Configurar… | Diálogo con secciones (títulos / cuerpo / tablas), validación y cierre al guardar |
+| ⚙️ Configurar… | Diálogo con secciones (títulos / cuerpo / tablas), validación y cierre al guardar. La config se persiste en el documento (`DocumentProperties`) |
 | 📋 Ver resumen | Reabre los logs de la última ejecución (solo bajo demanda; no se abren solos) |
 
 ## Configuración rápida

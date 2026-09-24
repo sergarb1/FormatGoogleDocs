@@ -2,6 +2,7 @@
 // MENÚ (agrupado por intención)
 // ==========================================
 function onOpen() {
+  cargarConfiguracion();
   const ui = DocumentApp.getUi();
 
   const menuTitulos = ui.createMenu('📑 Títulos y estructura')
@@ -33,6 +34,7 @@ function onOpen() {
 // DIÁLOGO DE CONFIGURACIÓN
 // ==========================================
 function mostrarDialogoConfig() {
+  cargarConfiguracion();
   const html = HtmlService.createHtmlOutput(
     `
     <style>
@@ -294,12 +296,13 @@ function mostrarDialogoConfig() {
 
       function guardar() {
         const status = document.getElementById('status');
+        const btn = document.getElementById('btnGuardar');
         if (!validar()) {
           status.className = 'error';
           status.textContent = 'Revisa los campos marcados.';
           return;
         }
-        const btn = document.getElementById('btnGuardar');
+        if (btn.disabled) return;
         btn.disabled = true;
         btn.textContent = 'Guardando…';
         status.className = '';
@@ -316,19 +319,49 @@ function mostrarDialogoConfig() {
           docsBordes: document.getElementById('docsBordes').checked
         };
 
-        google.script.run
-          .withSuccessCallback(function() {
-            status.className = 'ok';
-            status.textContent = '✓ Guardado';
-            setTimeout(function() { google.script.host.close(); }, 350);
-          })
-          .withFailureCallback(function(err) {
-            btn.disabled = false;
-            btn.textContent = 'Guardar';
-            status.className = 'error';
-            status.textContent = 'No se pudo guardar: ' + err;
-          })
-          .aplicarConfiguracion(datos);
+        let cerrado = false;
+        let responder = false;
+        // Si el backend no contesta, no dejar el botón colgado en «Guardando…»
+        const timeoutId = setTimeout(function() {
+          if (responder) return;
+          responder = true;
+          btn.disabled = false;
+          btn.textContent = 'Guardar';
+          status.className = 'error';
+          status.textContent = 'Sin respuesta del script. Revisa el documento (recarga) y vuelve a intentarlo.';
+        }, 15000);
+
+        function ok() {
+          if (responder) return;
+          responder = true;
+          clearTimeout(timeoutId);
+          status.className = 'ok';
+          status.textContent = '✓ Guardado';
+          setTimeout(function() {
+            if (cerrado) return;
+            cerrado = true;
+            try { google.script.host.close(); } catch (e) {}
+          }, 350);
+        }
+
+        function fail(err) {
+          if (responder) return;
+          responder = true;
+          clearTimeout(timeoutId);
+          btn.disabled = false;
+          btn.textContent = 'Guardar';
+          status.className = 'error';
+          status.textContent = 'No se pudo guardar: ' + (err && err.message ? err.message : err);
+        }
+
+        try {
+          google.script.run
+            .withSuccessCallback(ok)
+            .withFailureCallback(fail)
+            .aplicarConfiguracion(datos);
+        } catch (e) {
+          fail(e);
+        }
       }
     </script>
     `
@@ -339,23 +372,46 @@ function mostrarDialogoConfig() {
   DocumentApp.getUi().showModalDialog(html, '⚙️ Configurar Formato Pro');
 }
 
+// Punto de entrada de google.script.run desde el diálogo ⚙️.
+// Siempre devuelve; los errores van a withFailureCallback (nunca dejar el cliente colgado).
 function aplicarConfiguracion(datos) {
-  if (datos.preset) CONFIG.PRESET_TITULOS = datos.preset;
-  if (datos.fuente) CONFIG.FUENTE_CUERPO = datos.fuente;
-  if (datos.tamano) CONFIG.TAMAÑO_CUERPO = parseInt(datos.tamano, 10);
-  if (datos.interlineado) CONFIG.INTERLINEADO = parseFloat(datos.interlineado);
-  if (datos.interlineadoTabla) CONFIG.INTERLINEADO_TABLA = parseFloat(datos.interlineadoTabla);
-  if (typeof datos.ajustarDim === 'boolean') CONFIG.AJUSTAR_DIMENSIONES_TABLA = datos.ajustarDim;
-  if (typeof datos.docsBordes === 'boolean') CONFIG.USAR_DOCS_API_BORDES = datos.docsBordes;
+  try {
+    cargarConfiguracion();
+    if (!datos || typeof datos !== 'object') {
+      throw new Error('Datos de configuración inválidos');
+    }
 
-  const mapAlignment = {
-    'JUSTIFY': DocumentApp.HorizontalAlignment.JUSTIFY,
-    'LEFT': DocumentApp.HorizontalAlignment.LEFT,
-    'CENTER': DocumentApp.HorizontalAlignment.CENTER,
-    'RIGHT': DocumentApp.HorizontalAlignment.RIGHT
-  };
-  if (datos.alineacion && mapAlignment[datos.alineacion]) {
-    CONFIG.ALINEACION_CUERPO = mapAlignment[datos.alineacion];
+    if (datos.preset) CONFIG.PRESET_TITULOS = String(datos.preset);
+    if (datos.fuente) CONFIG.FUENTE_CUERPO = String(datos.fuente);
+    if (datos.tamano !== undefined && datos.tamano !== null && datos.tamano !== '') {
+      CONFIG.TAMAÑO_CUERPO = parseInt(datos.tamano, 10);
+    }
+    if (datos.interlineado !== undefined && datos.interlineado !== null && datos.interlineado !== '') {
+      CONFIG.INTERLINEADO = parseFloat(datos.interlineado);
+    }
+    if (datos.interlineadoTabla !== undefined && datos.interlineadoTabla !== null && datos.interlineadoTabla !== '') {
+      CONFIG.INTERLINEADO_TABLA = parseFloat(datos.interlineadoTabla);
+    }
+    if (typeof datos.ajustarDim === 'boolean') CONFIG.AJUSTAR_DIMENSIONES_TABLA = datos.ajustarDim;
+    if (typeof datos.docsBordes === 'boolean') CONFIG.USAR_DOCS_API_BORDES = datos.docsBordes;
+
+    const mapAlignment = {
+      'JUSTIFY': DocumentApp.HorizontalAlignment.JUSTIFY,
+      'LEFT': DocumentApp.HorizontalAlignment.LEFT,
+      'CENTER': DocumentApp.HorizontalAlignment.CENTER,
+      'RIGHT': DocumentApp.HorizontalAlignment.RIGHT
+    };
+    if (datos.alineacion && mapAlignment[datos.alineacion]) {
+      CONFIG.ALINEACION_CUERPO = mapAlignment[datos.alineacion];
+    }
+
+    if (!guardarConfiguracion()) {
+      throw new Error('No se pudo persistir la configuración en el documento');
+    }
+    return { ok: true };
+  } catch (e) {
+    try { fpLog('[Formato Pro] aplicarConfiguracion: %s', e); } catch (e2) {}
+    throw e instanceof Error ? e : new Error(String(e));
   }
 }
 
@@ -363,6 +419,7 @@ function aplicarConfiguracion(datos) {
 // EJECUCIÓN MAESTRA
 // ==========================================
 function ejecutarLimpiezaTotal() {
+  cargarConfiguracion();
   fpLimpiarLogs();
   FP_EN_TOTAL = true;
   try {

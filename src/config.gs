@@ -70,6 +70,65 @@ const CONFIG = {
   DEBUG_MOSTRAR_DIALOGO: false
 };
 
+// Clave de persistencia de la configuración editable (por documento)
+const FP_CONFIG_KEY = 'FP_CONFIG';
+
+// Campos de CONFIG que el diálogo puede guardar/cargar (sin regex ni arrays complejos)
+const FP_CONFIG_CLAVES = [
+  'PRESET_TITULOS',
+  'FUENTE_CUERPO',
+  'TAMAÑO_CUERPO',
+  'ALINEACION_CUERPO',
+  'INTERLINEADO',
+  'ESPACIO_ANTES',
+  'ESPACIO_DESPUES',
+  'INTERLINEADO_TABLA',
+  'AJUSTAR_DIMENSIONES_TABLA',
+  'USAR_DOCS_API_BORDES',
+  'BORDE_TABLA_GROSOR',
+  'BORDE_TABLA_COLOR',
+  'NORMALIZAR_TABS_EN_CELDAS',
+  'COLAPSAR_ESPACIOS_EN_CELDAS',
+  'DEBUG_TIEMPOS',
+  'DEBUG_TABLAS',
+  'DEBUG_MOSTRAR_DIALOGO'
+];
+
+// Carga lo guardado en DocumentProperties sobre CONFIG (idempotente).
+// Se llama al inicio de cada punto de entrada: cada ejecución de GAS es un contenedor nuevo.
+function cargarConfiguracion() {
+  try {
+    const raw = PropertiesService.getDocumentProperties().getProperty(FP_CONFIG_KEY);
+    if (!raw) return;
+    const guardado = JSON.parse(raw);
+    if (!guardado || typeof guardado !== 'object') return;
+    for (let i = 0; i < FP_CONFIG_CLAVES.length; i++) {
+      const k = FP_CONFIG_CLAVES[i];
+      if (Object.prototype.hasOwnProperty.call(guardado, k)) {
+        CONFIG[k] = guardado[k];
+      }
+    }
+  } catch (e) {
+    try { fpLog('[Formato Pro] cargarConfiguracion: %s', e); } catch (e2) {}
+  }
+}
+
+// Persiste los campos editables de CONFIG en DocumentProperties.
+function guardarConfiguracion() {
+  try {
+    const salida = {};
+    for (let i = 0; i < FP_CONFIG_CLAVES.length; i++) {
+      const k = FP_CONFIG_CLAVES[i];
+      salida[k] = CONFIG[k];
+    }
+    PropertiesService.getDocumentProperties().setProperty(FP_CONFIG_KEY, JSON.stringify(salida));
+    return true;
+  } catch (e) {
+    try { fpLog('[Formato Pro] guardarConfiguracion: %s', e); } catch (e2) {}
+    return false;
+  }
+}
+
 // Presets de expresiones regulares para títulos.
 // El orden de niveles (3 → 2 → 1) importa: se aplica el primer match.
 // Dos tipos de guion:

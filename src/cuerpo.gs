@@ -2,6 +2,7 @@
 // MÓDULO 3: NORMALIZACIÓN DE CUERPO
 // ==========================================
 function normalizarCuerpo() {
+  cargarConfiguracion();
   const paragraphs = DocumentApp.getActiveDocument().getBody().getParagraphs();
 
   paragraphs.forEach(p => {
@@ -26,6 +27,7 @@ function normalizarCuerpo() {
 // MÓDULO 4: APLICAR FUENTE / ALINEACIÓN (acción dedicada)
 // ==========================================
 function aplicarFuenteCuerpo() {
+  cargarConfiguracion();
   const paragraphs = DocumentApp.getActiveDocument().getBody().getParagraphs();
 
   paragraphs.forEach(p => {
@@ -45,6 +47,7 @@ function aplicarFuenteCuerpo() {
 // Borra párrafos en blanco y viñetas (LIST_ITEM) sin texto.
 // El párrafo siguiente (el contenido real) NO se mueve.
 function eliminarParrafosVacios() {
+  cargarConfiguracion();
   const body = DocumentApp.getActiveDocument().getBody();
   const paragraphs = body.getParagraphs();
   let borrados = 0;
@@ -115,6 +118,7 @@ function eliminarParrafosVacios() {
 // MÓDULO 6: LIMPIAR ESTILOS COPIADOS
 // ==========================================
 function limpiarEstilosCopiados() {
+  cargarConfiguracion();
   const body = DocumentApp.getActiveDocument().getBody();
 
   limpiarParrafos(body.getParagraphs());
@@ -183,6 +187,7 @@ function limpiarParrafos(paragraphs) {
 // Quita espacios sueltos a izquierda/derecha en párrafos del cuerpo y en
 // celdas de tablas de datos. No toca código monoespaciado ni tablas 1x1.
 function recortarEspaciosLaterales() {
+  cargarConfiguracion();
   const soloMenu = !FP_EN_TOTAL;
   if (soloMenu) fpLimpiarLogs();
 

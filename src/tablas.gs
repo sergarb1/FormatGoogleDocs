@@ -2,6 +2,7 @@
 // MÓDULO 2: PROCESAMIENTO DE TABLAS
 // ==========================================
 function procesarTablas() {
+  cargarConfiguracion();
   const soloMenu = !FP_EN_TOTAL;
   if (soloMenu) fpLimpiarLogs();
 

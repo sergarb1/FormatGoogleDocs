@@ -68,7 +68,9 @@ Script modular en GAS para **limpiar y normalizar documentos** generados al copi
 | `esBlancoCodigo(cp)` | `src/utilidades.gs` | util | true si el code point es blanco/ZWSP/NBSP/BOM… |
 | `rangosBlancosLaterales(texto)` | `src/utilidades.gs` | util | Rangos `[ini,fin)` de no-blancos laterales |
 | `mostrarDialogoConfig()` | `src/ui.gs` | UI | Modal por secciones (títulos/cuerpo/tablas) con validación y cierre al guardar |
-| `aplicarConfiguracion(datos)` | `src/ui.gs` | UI | Guarda valores del modal en `CONFIG` (incl. interlineado tabla) |
+| `aplicarConfiguracion(datos)` | `src/ui.gs` | UI | Punto de entrada `google.script.run`: aplica el modal a `CONFIG`, persiste en `DocumentProperties` y **siempre** devuelve/error (con timeout en el cliente para no dejarse en «Guardando…») |
+| `cargarConfiguracion()` | `src/config.gs` | util | Carga `DocumentProperties.FP_CONFIG` sobre `CONFIG` (llamar al inicio de cada punto de entrada; GAS es stateless por ejecución) |
+| `guardarConfiguracion()` | `src/config.gs` | util | Persiste campos editables de `CONFIG` en `DocumentProperties` |
 | `ejecutarLimpiezaTotal()` | `src/ui.gs` | maestro | Ejecuta todos los módulos en orden |
 | `fpLog()` | `src/logs.gs` | util | Log a consola + buffer en memoria |
 | `fpFinEjecucion(titulo)` | `src/logs.gs` | util | Guarda logs y abre diálogo solo si `DEBUG_MOSTRAR_DIALOGO` (por defecto `false`) |
@@ -80,7 +82,8 @@ Script modular en GAS para **limpiar y normalizar documentos** generados al copi
 2. Si necesita configuración, añadirla al objeto `CONFIG` en `src/config.gs`.
 3. Registrarla en `onOpen()` con un `.addItem(...)` (o `.addSubMenu(...)` si agrupa en 📑/📊/📝).
 4. Si debe entrar en la limpieza total, llamarla desde `ejecutarLimpiezaTotal()` en el orden correcto.
-5. Actualizar `README.md` (tabla de opciones) y este archivo (mapa de módulos).
+5. Si lee `CONFIG`, llamar `cargarConfiguracion()` al principio (cada ejecución de GAS es un contenedor nuevo sin estado).
+6. Actualizar `README.md` (tabla de opciones) y este archivo (mapa de módulos).
 
 ## Prompt maestro
 
