@@ -373,7 +373,7 @@ function mostrarDialogoConfig() {
 }
 
 // Punto de entrada de google.script.run desde el diálogo ⚙️.
-// Siempre devuelve; los errores van a withFailureCallback (nunca dejar el cliente colgado).
+// Siempre devuelve; los errores van a withFailureHandler (nunca dejar el cliente colgado).
 function aplicarConfiguracion(datos) {
   try {
     cargarConfiguracion();
