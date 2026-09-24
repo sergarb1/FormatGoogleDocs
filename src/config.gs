@@ -17,8 +17,11 @@ const CONFIG = {
   ESPACIO_ANTES: 0,
   ESPACIO_DESPUES: 8,
 
-  // Preset de detección de títulos: 'NUMERICO' | 'MARKDOWN' | 'AMBOS' | 'PERSONALIZADO'
-  PRESET_TITULOS: 'AMBOS',
+  // Preset de detección de títulos.
+  // DEFECTO = 'GUION_LARGO' (solo "—" / "–").
+  // 'GUION' = ambos tipos (largo y corto "-").
+  // También: 'GUION_CORTO', 'PUNTO', 'MARKDOWN', 'MIXTO', 'PERSONALIZADO'
+  PRESET_TITULOS: 'GUION_LARGO',
 
   // Regex personalizadas (solo se usan si PRESET_TITULOS = 'PERSONALIZADO')
   // Cada entrada: { nivel: 1|2|3, regex: RegExp }
@@ -67,25 +70,53 @@ const CONFIG = {
   DEBUG_MOSTRAR_DIALOGO: false
 };
 
-// Presets de expresiones regulares para títulos
+// Presets de expresiones regulares para títulos.
+// El orden de niveles (3 → 2 → 1) importa: se aplica el primer match.
+// Dos tipos de guion:
+//   CORTO "-" (U+002D) y LARGO "–" en dash (U+2013) / "—" em dash (U+2014).
+// DEFECTO = GUION_LARGO (solo largo). GUION coge los dos.
 const PRESETS_TITULOS = {
-  NUMERICO: [
-    { nivel: 3, regex: /^\d+\.\d+\.\d+[\.\-:]?\s+/ },
-    { nivel: 2, regex: /^\d+\.\d+[\.\-:]?\s+/ },
-    { nivel: 1, regex: /^\d+[\.\-:]\s+/ }
+  // Ambos tipos: "1 — ", "1 – ", "1 - ", "1.2 — ", "1.2.3 – "
+  GUION: [
+    { nivel: 3, regex: /^\d+\.\d+\.\d+\s*[-–—]\s+/ },
+    { nivel: 2, regex: /^\d+\.\d+\s*[-–—]\s+/ },
+    { nivel: 1, regex: /^\d+\s*[-–—]\s+/ }
   ],
+  // DEFECTO — solo guion LARGO: "1 — ", "1.2 – "
+  GUION_LARGO: [
+    { nivel: 3, regex: /^\d+\.\d+\.\d+\s*[–—]\s+/ },
+    { nivel: 2, regex: /^\d+\.\d+\s*[–—]\s+/ },
+    { nivel: 1, regex: /^\d+\s*[–—]\s+/ }
+  ],
+  // Solo guion CORTO (hífen ASCII): "1 - ", "1.2 - "
+  GUION_CORTO: [
+    { nivel: 3, regex: /^\d+\.\d+\.\d+\s*-\s+/ },
+    { nivel: 2, regex: /^\d+\.\d+\s*-\s+/ },
+    { nivel: 1, regex: /^\d+\s*-\s+/ }
+  ],
+  // Punto clásico: "1. ", "1.2. ", "1.2.3. "
+  PUNTO: [
+    { nivel: 3, regex: /^\d+\.\d+\.\d+\.\s+/ },
+    { nivel: 2, regex: /^\d+\.\d+\.\s+/ },
+    { nivel: 1, regex: /^\d+\.\s+/ }
+  ],
+  // Markdown: "# ", "## ", "### "
   MARKDOWN: [
     { nivel: 3, regex: /^#{3,}\s+/ },
     { nivel: 2, regex: /^##\s+/ },
     { nivel: 1, regex: /^#\s+/ }
   ],
-  AMBOS: [
-    { nivel: 3, regex: /^\d+\.\d+\.\d+[\.\-:]?\s+/ },
+  // Mixto: punto, guion (corto y largo) y Markdown
+  MIXTO: [
+    { nivel: 3, regex: /^\d+\.\d+\.\d+\s*[-.–—:]\s+/ },
+    { nivel: 2, regex: /^\d+\.\d+\s*[-.–—:]\s+/ },
+    { nivel: 1, regex: /^\d+\s*[-.–—:]\s+/ },
     { nivel: 3, regex: /^#{3,}\s+/ },
-    { nivel: 2, regex: /^\d+\.\d+[\.\-:]?\s+/ },
     { nivel: 2, regex: /^##\s+/ },
-    { nivel: 1, regex: /^\d+[\.\-:]\s+/ },
     { nivel: 1, regex: /^#\s+/ }
   ],
+  // Compatibilidad con nombres antiguos
+  NUMERICO: null, // se resuelve a PUNTO
+  AMBOS: null,    // se resuelve a MIXTO
   PERSONALIZADO: []
 };

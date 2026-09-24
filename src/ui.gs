@@ -174,9 +174,12 @@ function mostrarDialogoConfig() {
         <div class="field">
           <label for="preset">Cómo detectar títulos</label>
           <select id="preset">
-            <option value="AMBOS">Numérico + Markdown (recomendado)</option>
-            <option value="NUMERICO">Solo numérico (1., 1.1, 1.1.1)</option>
-            <option value="MARKDOWN">Solo Markdown (#, ##, ###)</option>
+            <option value="GUION_LARGO" ${CONFIG.PRESET_TITULOS === 'GUION_LARGO' ? 'selected' : ''}>Guion LARGO — "1 — ", "1.2 – " (defecto)</option>
+            <option value="GUION" ${CONFIG.PRESET_TITULOS === 'GUION' ? 'selected' : ''}>Guion ambos — largo "—" y corto "-"</option>
+            <option value="GUION_CORTO" ${CONFIG.PRESET_TITULOS === 'GUION_CORTO' ? 'selected' : ''}>Guion CORTO — "1 - ", "1.2 - "</option>
+            <option value="PUNTO" ${CONFIG.PRESET_TITULOS === 'PUNTO' ? 'selected' : ''}>Punto — "1. ", "1.2. "</option>
+            <option value="MARKDOWN" ${CONFIG.PRESET_TITULOS === 'MARKDOWN' ? 'selected' : ''}>Markdown — "# ", "## "</option>
+            <option value="MIXTO" ${CONFIG.PRESET_TITULOS === 'MIXTO' ? 'selected' : ''}>Mixto — punto + guion + Markdown</option>
           </select>
         </div>
       </fieldset>
@@ -276,7 +279,7 @@ function mostrarDialogoConfig() {
       });
 
       function restaurarDefecto() {
-        document.getElementById('preset').value = 'AMBOS';
+        document.getElementById('preset').value = 'GUION_LARGO';
         document.getElementById('fuente').value = 'Calibri';
         document.getElementById('tamano').value = 12;
         document.getElementById('alineacion').value = 'JUSTIFY';

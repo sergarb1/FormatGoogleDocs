@@ -42,7 +42,7 @@ Script modular en GAS para **limpiar y normalizar documentos** generados al copi
 | Símbolo | Fichero | Tipo | Responsabilidad |
 |---|---|---|---|
 | `CONFIG` | `src/config.gs` | objeto | Toda la configuración editable (incl. `INTERLINEADO` 1.15, `INTERLINEADO_TABLA` 1.5, `BORDE_TABLA_*`, `USAR_DOCS_API_BORDES`, `NORMALIZAR_TABS_EN_CELDAS`, `COLAPSAR_ESPACIOS_EN_CELDAS`, `AJUSTAR_DIMENSIONES_TABLA`, flags `DEBUG_*` por defecto en `false`) |
-| `PRESETS_TITULOS` | `src/config.gs` | objeto | Regex de títulos por preset |
+| `PRESETS_TITULOS` | `src/config.gs` | objeto | Regex de títulos: `GUION` (corto `-` y largo `—`/`–`), `GUION_LARGO` (defecto), `GUION_CORTO`, `PUNTO`, `MARKDOWN`, `MIXTO`, `PERSONALIZADO` |
 | `onOpen()` | `src/ui.gs` | UI | Menú `⚡ Formato Pro` con submenús 📑/📊/📝 + ⚙️/📋 |
 | `procesarTitulos()` | `src/titulos.gs` | módulo 1 | Aplica H1/H2/H3 según presets/regex |
 | `obtenerPatronesTitulo()` | `src/titulos.gs` | util | Resuelve qué regex usar según `CONFIG.PRESET_TITULOS` |

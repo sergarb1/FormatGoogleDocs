@@ -28,8 +28,18 @@ function procesarTitulos() {
 }
 
 function obtenerPatronesTitulo() {
-  if (CONFIG.PRESET_TITULOS === 'PERSONALIZADO') {
-    return CONFIG.PATRONES_PERSONALIZADOS;
+  const estilo = CONFIG.PRESET_TITULOS;
+
+  if (estilo === 'PERSONALIZADO') {
+    if (CONFIG.PATRONES_PERSONALIZADOS && CONFIG.PATRONES_PERSONALIZADOS.length > 0) {
+      return CONFIG.PATRONES_PERSONALIZADOS;
+    }
+    return PRESETS_TITULOS.GUION_LARGO;
   }
-  return PRESETS_TITULOS[CONFIG.PRESET_TITULOS] || PRESETS_TITULOS.AMBOS;
+
+  // Alias de versiones anteriores
+  if (estilo === 'NUMERICO') return PRESETS_TITULOS.PUNTO;
+  if (estilo === 'AMBOS') return PRESETS_TITULOS.MIXTO;
+
+  return PRESETS_TITULOS[estilo] || PRESETS_TITULOS.GUION_LARGO;
 }

@@ -4,10 +4,14 @@ Script de **Google Apps Script** que limpia y normaliza documentos de Google Doc
 
 ## Características
 
-- **Jerarquía de títulos** automática (H1, H2, H3) con presets:
-  - Numérico: `1.`, `1.1`, `1.1.1`, `1 -`, etc.
+- **Jerarquía de títulos** automática (H1, H2, H3) con presets seleccionables:
+  - **Guion largo (defecto)**: `1 — `, `1 – `
+  - Guion ambos: largo `—`/`–` **y corto** `1 - `
+  - Solo guion corto: `1 - `, `1.2 - `
+  - Punto: `1. `, `1.2. `, `1.2.3. `
   - Markdown: `#`, `##`, `###`
-  - Ambos (recomendado) o expresiones regulares personalizadas
+  - Mixto: punto + guion + Markdown
+  - O expresiones regulares personalizadas (`PERSONALIZADO`)
 - **Cuerpo de texto** por defecto: **Calibri 12, justificado**, interlineado 1.15 (todo configurable)
 - **Tablas de datos**: trim de espacios/tabs en celdas (tabs intermedios → espacio), cabecera en **negrita + centrada + gris** (`#dadce0`), resto **justificado y sin fondo**, **cuadrícula con borde fino y negro** vía DocumentApp + Docs API, **interlineado de celdas 1.5** (independiente del cuerpo), tabla al **ancho útil de página** con columnas proporcionales al contenido (ignora tablas 1×1)
 - **Protección de CodeBlocks**: detecta tablas 1×1 y fuentes monoespaciadas (`Consolas`, `Courier New`, `Roboto Mono`, `Fira Code`, `JetBrains Mono`…) y no les aplica formato de cuerpo ni recorte de espacios
@@ -57,8 +61,8 @@ const CONFIG = {
   INTERLINEADO: 1.15, // solo cuerpo (fuera de tablas)
   ESPACIO_ANTES: 0,
   ESPACIO_DESPUES: 8,
-  PRESET_TITULOS: 'AMBOS', // 'NUMERICO' | 'MARKDOWN' | 'AMBOS' | 'PERSONALIZADO'
-  PATRONES_PERSONALIZADOS: [], // para PRESET_TITULOS = 'PERSONALIZADO'
+  PRESET_TITULOS: 'GUION_LARGO', // 'GUION_LARGO' (defecto) | 'GUION' | 'GUION_CORTO' | 'PUNTO' | 'MARKDOWN' | 'MIXTO' | 'PERSONALIZADO'
+  PATRONES_PERSONALIZADOS: [], // solo si PRESET_TITULOS = 'PERSONALIZADO'
   IGNORAR_CODEBLOCKS_EN_FORMATO: true,
   FUENTES_CODIGO: [ 'Consolas', 'Courier New', /* ... */ ],
   TRATAR_TABLA_1X1_COMO_CODIGO: true,
