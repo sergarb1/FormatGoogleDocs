@@ -124,13 +124,21 @@ function procesarTablas() {
     }
   });
 
-  // Bordes fuertes vía Docs API (una petición por tabla de datos)
+  // Bordes fuertes vía Docs API (una petición por tabla de datos).
+  // Nunca debe tumbar procesarTablas: si Docs API no puede tocar este documento,
+  // los bordes de DocumentApp de arriba ya están aplicados.
   let docsApiOk = 0;
   let docsApiErr = 0;
   if (CONFIG.USAR_DOCS_API_BORDES && indicesDatos.length > 0) {
-    const res = aplicarBordesDocsApi(indicesDatos);
-    docsApiOk = res.ok;
-    docsApiErr = res.err;
+    try {
+      const res = aplicarBordesDocsApi(indicesDatos);
+      docsApiOk = res.ok;
+      docsApiErr = res.err;
+    } catch (eApi) {
+      docsApiErr = indicesDatos.length;
+      fpLog('[Formato Pro] Docs API de bordes omitida (DocumentApp sí la aplicó): %s', eApi);
+      fpLog('[Formato Pro] Puedes desactivar «Borde negro fino (Docs API)» en ⚙️ Configurar… si este documento no deja acceso a la API.');
+    }
   }
 
   if (CONFIG.DEBUG_TABLAS) {
@@ -142,81 +150,87 @@ function procesarTablas() {
 }
 
 // Aplica bordes de CONFIG.BORDE_TABLA_* a tablas de datos con Docs API
-// (updateTableCellStyle). Devuelve {ok, err}.
+// (updateTableCellStyle). Devuelve {ok, err}. Nunca lanza: si la API no puede
+// acceder al documento (p. ej. «Service Documents failed…»), se omite y se avisa.
 function aplicarBordesDocsApi(tablasDatos) {
   const out = { ok: 0, err: 0 };
-  if (typeof Docs === 'undefined' || !Docs || !Docs.Documents) {
-    if (CONFIG.DEBUG_TABLAS) {
-      fpLog('[Formato Pro][debug] Docs API no disponible — Editor → Servicios → Google Docs API');
-    }
-    return out;
-  }
-
-  const docId = DocumentApp.getActiveDocument().getId();
-  const rgb = hexARgb(CONFIG.BORDE_TABLA_COLOR);
-  const borde = {
-    width: { magnitude: CONFIG.BORDE_TABLA_GROSOR, unit: 'PT' },
-    color: { color: { rgbColor: rgb } },
-    dashStyle: 'SOLID'
-  };
-
-  let startIdxs = [];
   try {
-    startIdxs = indicesTablasInicio(docId);
-  } catch (eGet) {
-    out.err = tablasDatos.length;
-    fpLog('[Formato Pro][debug] Docs.Documents.get para índices de tabla: %s', eGet);
-    return out;
-  }
-
-  const requests = [];
-  tablasDatos.forEach(meta => {
-    if (meta.numRows < 1 || meta.numCols < 1) return;
-    const start = startIdxs[meta.tableIndex];
-    if (typeof start !== 'number') {
-      if (CONFIG.DEBUG_TABLAS) {
-        fpLog('[Formato Pro][debug] sin startIndex para tabla DocumentApp %s (API tiene %s tablas)',
-          meta.tableIndex, startIdxs.length);
-      }
-      return;
+    if (typeof Docs === 'undefined' || !Docs || !Docs.Documents) {
+      fpLog('[Formato Pro] Docs API no disponible — Editor → Servicios → Google Docs API. Bordes solo con DocumentApp.');
+      return out;
     }
-    requests.push({
-      updateTableCellStyle: {
-        tableStartLocation: { index: start },
-        tableCellStyle: {
-          borderTop: borde,
-          borderBottom: borde,
-          borderLeft: borde,
-          borderRight: borde
-        },
-        fields: 'borderTop,borderBottom,borderLeft,borderRight'
-      }
-    });
-  });
 
-  if (requests.length === 0) return out;
+    const docId = DocumentApp.getActiveDocument().getId();
+    const rgb = hexARgb(CONFIG.BORDE_TABLA_COLOR);
+    const borde = {
+      width: { magnitude: CONFIG.BORDE_TABLA_GROSOR, unit: 'PT' },
+      color: { color: { rgbColor: rgb } },
+      dashStyle: 'SOLID'
+    };
 
-  try {
-    Docs.Documents.batchUpdate({ requests: requests }, docId);
-    out.ok = requests.length;
-  } catch (eBatch) {
-    if (CONFIG.DEBUG_TABLAS) {
-      fpLog('[Formato Pro][debug] batchUpdate bordes (%s): %s — reintento 1 a 1',
-        requests.length, eBatch);
+    let startIdxs = [];
+    try {
+      startIdxs = indicesTablasInicio(docId);
+    } catch (eGet) {
+      out.err = tablasDatos.length;
+      fpLog('[Formato Pro] Docs API sin acceso a este documento: %s', eGet);
+      fpLog('[Formato Pro] Bordes ya aplicados con DocumentApp. Si quieres la API: Servicios → Google Docs API y vuelve a autorizar; o desmárcalo en ⚙️.');
+      return out;
     }
-    requests.forEach((request, i) => {
-      try {
-        Docs.Documents.batchUpdate({ requests: [request] }, docId);
-        out.ok++;
-      } catch (e) {
-        out.err++;
+
+    const requests = [];
+    tablasDatos.forEach(meta => {
+      if (meta.numRows < 1 || meta.numCols < 1) return;
+      const start = startIdxs[meta.tableIndex];
+      if (typeof start !== 'number') {
         if (CONFIG.DEBUG_TABLAS) {
-          fpLog('[Formato Pro][debug] Docs API solicitud %s: %s', i, e);
+          fpLog('[Formato Pro][debug] sin startIndex para tabla DocumentApp %s (API tiene %s tablas)',
+            meta.tableIndex, startIdxs.length);
         }
+        return;
       }
+      requests.push({
+        updateTableCellStyle: {
+          tableStartLocation: { index: start },
+          tableCellStyle: {
+            borderTop: borde,
+            borderBottom: borde,
+            borderLeft: borde,
+            borderRight: borde
+          },
+          fields: 'borderTop,borderBottom,borderLeft,borderRight'
+        }
+      });
     });
+
+    if (requests.length === 0) return out;
+
+    try {
+      Docs.Documents.batchUpdate({ requests: requests }, docId);
+      out.ok = requests.length;
+    } catch (eBatch) {
+      if (CONFIG.DEBUG_TABLAS) {
+        fpLog('[Formato Pro][debug] batchUpdate bordes (%s): %s — reintento 1 a 1',
+          requests.length, eBatch);
+      }
+      requests.forEach((request, i) => {
+        try {
+          Docs.Documents.batchUpdate({ requests: [request] }, docId);
+          out.ok++;
+        } catch (e) {
+          out.err++;
+          if (CONFIG.DEBUG_TABLAS) {
+            fpLog('[Formato Pro][debug] Docs API solicitud %s: %s', i, e);
+          }
+        }
+      });
+    }
+    return out;
+  } catch (eFatal) {
+    out.err = tablasDatos.length;
+    fpLog('[Formato Pro] Docs API omitida sin tumbar el formateo: %s', eFatal);
+    return out;
   }
-  return out;
 }
 
 // startIndex UTF-16 de cada tabla de primer nivel (mismo orden que Body.getTables)
