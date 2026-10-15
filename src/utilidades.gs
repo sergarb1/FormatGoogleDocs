@@ -2,6 +2,91 @@
 // UTILIDADES (DETECCIÓN DE CÓDIGO, NODOS, TRIM)
 // ==========================================
 
+// ==========================================
+// ÁMBITO DE EJECUCIÓN (documento completo o selección)
+// ==========================================
+// Si FP_AMBITO_SELECCION contiene párrafos/tablas, los módulos solo los tocan a ellos.
+var FP_AMBITO_SELECCION = null; // { paragraphs: Paragraph[], tables: Table[] } | null
+
+// true si el ElementType corresponde al Body. El enum oficial expone
+// BODY_SECTION; DocumentApp.ElementType.BODY no existe (sería undefined),
+// pero se comprueba por si el runtime mantiene el alias legado.
+function esTipoCuerpo(tipo) {
+  return tipo === DocumentApp.ElementType.BODY_SECTION ||
+    tipo === DocumentApp.ElementType.BODY;
+}
+
+// Sube desde cualquier elemento interior hasta su hijo directo del body.
+// Devuelve null si no llega (selección en cabecera/pie, o el propio body).
+function hijoDirectoDeBody(body, el) {
+  let node = el;
+  for (let i = 0; node && i < 100; i++) {
+    const parent = node.getParent();
+    if (!parent) return null;
+    if (esTipoCuerpo(parent.getType())) return node;
+    node = parent;
+  }
+  return null;
+}
+
+// Hijos directos del body que intersectan con la selección actual (únicos, en orden)
+function hijosSeleccionBody() {
+  const doc = DocumentApp.getActiveDocument();
+  const sel = doc.getSelection();
+  if (!sel) return null;
+  const body = doc.getBody();
+  const ranges = sel.getRangeElements();
+  const vistos = {};
+  const hijos = [];
+  for (let i = 0; i < ranges.length; i++) {
+    const el = hijoDirectoDeBody(body, ranges[i].getElement());
+    if (!el) continue;
+    const idx = body.getChildIndex(el);
+    if (!(idx >= 0) || vistos[idx]) continue;
+    vistos[idx] = true;
+    hijos.push(el);
+  }
+  hijos.sort((a, b) => body.getChildIndex(a) - body.getChildIndex(b));
+  return hijos;
+}
+
+// Convierte la selección en { paragraphs, tables } o null si no hay selección.
+// Los hijos directos del body solo pueden ser PARAGRAPH, LIST_ITEM o TABLE
+// (nunca TEXT: siempre está dentro de un párrafo), así que basta comprobarlos.
+function ambitoSeleccionActual() {
+  const hijos = hijosSeleccionBody();
+  if (!hijos || hijos.length === 0) return null;
+  const paragraphs = [];
+  const tables = [];
+  hijos.forEach(el => {
+    const t = el.getType();
+    if (t === DocumentApp.ElementType.TABLE) {
+      tables.push(el.asTable());
+    } else if (t === DocumentApp.ElementType.PARAGRAPH) {
+      paragraphs.push(el.asParagraph());
+    } else if (t === DocumentApp.ElementType.LIST_ITEM) {
+      // getParagraphs() sí incluye ListItems (documentado) y ListItem «es un
+      // Paragraph asociado a un list ID»: se añade tal cual para que la
+      // selección procese viñetas igual que el modo documento completo.
+      paragraphs.push(el);
+    }
+  });
+  if (paragraphs.length === 0 && tables.length === 0) return null;
+  return { paragraphs: paragraphs, tables: tables };
+}
+
+// Párrafos a procesar: selección activa o todos los del body
+function parrafosObjetivo(body) {
+  if (FP_AMBITO_SELECCION) return FP_AMBITO_SELECCION.paragraphs;
+  return body.getParagraphs();
+}
+
+// Tablas a procesar: selección activa o todas las del body
+function tablasObjetivo(body) {
+  if (FP_AMBITO_SELECCION) return FP_AMBITO_SELECCION.tables;
+  return body.getTables();
+}
+
 // Tabla de 1 fila x 1 columna → asumimos CodeBlock
 function esTablaCodeBlock(table) {
   return (table.getNumRows() === 1 && table.getRow(0).getNumCells() === 1);
@@ -32,7 +117,7 @@ function parrafosDeCelda(cell) {
 // true si el párrafo está en una tabla de datos (no 1x1)
 function estaEnTablaDatos(paragraph) {
   let node = paragraph.getParent();
-  while (node && node.getType && node.getType() !== DocumentApp.ElementType.BODY) {
+  while (node && node.getType && !esTipoCuerpo(node.getType())) {
     if (node.getType() === DocumentApp.ElementType.TABLE) {
       return !esTablaCodeBlock(node.asTable());
     }
@@ -45,7 +130,7 @@ function estaEnTablaDatos(paragraph) {
 function estaEnTablaCodeBlock(paragraph) {
   if (!CONFIG.TRATAR_TABLA_1X1_COMO_CODIGO) return false;
   let node = paragraph.getParent();
-  while (node && node.getType && node.getType() !== DocumentApp.ElementType.BODY) {
+  while (node && node.getType && !esTipoCuerpo(node.getType())) {
     if (node.getType() === DocumentApp.ElementType.TABLE) {
       return esTablaCodeBlock(node.asTable());
     }

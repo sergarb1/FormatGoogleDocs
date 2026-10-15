@@ -43,6 +43,8 @@ const CONFIG = {
   // Bordes de tablas de datos (cuadrícula completa)
   BORDE_TABLA_GROSOR: 1, // puntos
   BORDE_TABLA_COLOR: '#000000',
+  // Fondo de la fila de cabecera de tablas de datos
+  CABECERA_TABLA_COLOR: '#dadce0',
   // Docs API (updateTableCellStyle) para forzar bordes en HTML pegado
   USAR_DOCS_API_BORDES: true,
 
@@ -67,7 +69,10 @@ const CONFIG = {
 
   // Al terminar un menú: mostrar diálogo modal con los logs (sin clasp logs)
   // Desactivado por defecto; se puede reactivar aquí o en el diálogo ⚙️
-  DEBUG_MOSTRAR_DIALOGO: false
+  DEBUG_MOSTRAR_DIALOGO: false,
+
+  // Alerta breve «✨ Listo: …» al terminar Limpieza completa / formatear selección
+  MOSTRAR_RESUMEN: true
 };
 
 // Clave de persistencia de la configuración editable (por documento)
@@ -76,6 +81,7 @@ const FP_CONFIG_KEY = 'FP_CONFIG';
 // Campos de CONFIG que el diálogo puede guardar/cargar (sin regex ni arrays complejos)
 const FP_CONFIG_CLAVES = [
   'PRESET_TITULOS',
+  'PATRONES_PERSONALIZADOS',
   'FUENTE_CUERPO',
   'TAMAÑO_CUERPO',
   'ALINEACION_CUERPO',
@@ -87,8 +93,12 @@ const FP_CONFIG_CLAVES = [
   'USAR_DOCS_API_BORDES',
   'BORDE_TABLA_GROSOR',
   'BORDE_TABLA_COLOR',
+  'CABECERA_TABLA_COLOR',
   'NORMALIZAR_TABS_EN_CELDAS',
   'COLAPSAR_ESPACIOS_EN_CELDAS',
+  'ESPACIO_ANTES',
+  'ESPACIO_DESPUES',
+  'MOSTRAR_RESUMEN',
   'DEBUG_TIEMPOS',
   'DEBUG_TABLAS',
   'DEBUG_MOSTRAR_DIALOGO'
@@ -141,6 +151,15 @@ function guardarConfiguracion() {
     }
     // Serializable: solo la clave del enum (el objeto enum no viaja bien en JSON)
     salida.ALINEACION_CUERPO = String(alineacionEnum(CONFIG.ALINEACION_CUERPO));
+    // RegExp no serializa (JSON.stringify → {}): guardar siempre el patrón como String
+    if (Array.isArray(salida.PATRONES_PERSONALIZADOS)) {
+      salida.PATRONES_PERSONALIZADOS = salida.PATRONES_PERSONALIZADOS.map(p => ({
+        nivel: p && p.nivel ? p.nivel : 1,
+        regex: p && p.regex instanceof RegExp
+          ? p.regex.source
+          : String((p && p.regex) || '')
+      }));
+    }
     PropertiesService.getDocumentProperties().setProperty(FP_CONFIG_KEY, JSON.stringify(salida));
     return true;
   } catch (e) {

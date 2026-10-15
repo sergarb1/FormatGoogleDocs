@@ -3,7 +3,9 @@
 // ==========================================
 function normalizarCuerpo() {
   cargarConfiguracion();
-  const paragraphs = DocumentApp.getActiveDocument().getBody().getParagraphs();
+  const body = DocumentApp.getActiveDocument().getBody();
+  const paragraphs = parrafosObjetivo(body);
+  let n = 0;
 
   paragraphs.forEach(p => {
     const heading = p.getHeading();
@@ -19,8 +21,11 @@ function normalizarCuerpo() {
       p.setFontFamily(CONFIG.FUENTE_CUERPO);
       p.setFontSize(CONFIG.TAMAÑO_CUERPO);
       p.setAlignment(alineacionEnum(CONFIG.ALINEACION_CUERPO));
+      n++;
     }
   });
+
+  fpStat('cuerpo', n);
 }
 
 // ==========================================
@@ -28,7 +33,8 @@ function normalizarCuerpo() {
 // ==========================================
 function aplicarFuenteCuerpo() {
   cargarConfiguracion();
-  const paragraphs = DocumentApp.getActiveDocument().getBody().getParagraphs();
+  const body = DocumentApp.getActiveDocument().getBody();
+  const paragraphs = parrafosObjetivo(body);
 
   paragraphs.forEach(p => {
     if (p.getHeading() !== DocumentApp.ParagraphHeading.NORMAL) return;
@@ -49,7 +55,7 @@ function aplicarFuenteCuerpo() {
 function eliminarParrafosVacios() {
   cargarConfiguracion();
   const body = DocumentApp.getActiveDocument().getBody();
-  const paragraphs = body.getParagraphs();
+  const paragraphs = parrafosObjetivo(body);
   let borrados = 0;
 
   for (let i = paragraphs.length - 1; i >= 0; i--) {
@@ -109,6 +115,7 @@ function eliminarParrafosVacios() {
     }
   }
 
+  fpStat('vacios', borrados);
   if (CONFIG.DEBUG_TABLAS || borrados > 0) {
     fpLog('[Formato Pro] eliminarParrafosVacios: borrados=%s', borrados);
   }
@@ -121,16 +128,16 @@ function limpiarEstilosCopiados() {
   cargarConfiguracion();
   const body = DocumentApp.getActiveDocument().getBody();
 
-  limpiarParrafos(body.getParagraphs());
+  let n = limpiarParrafos(parrafosObjetivo(body));
 
-  const tables = body.getTables();
+  const tables = tablasObjetivo(body);
   tables.forEach(table => {
     const numRows = table.getNumRows();
     for (let r = 0; r < numRows; r++) {
       const row = table.getRow(r);
       for (let c = 0; c < row.getNumCells(); c++) {
         const cell = row.getCell(c);
-        limpiarParrafos(parrafosDeCelda(cell));
+        n += limpiarParrafos(parrafosDeCelda(cell));
         if (!(CONFIG.TRATAR_TABLA_1X1_COMO_CODIGO && esTablaCodeBlock(table))) {
           if (r !== 0) {
             cell.setBackgroundColor(null);
@@ -139,13 +146,18 @@ function limpiarEstilosCopiados() {
       }
     }
   });
+
+  fpStat('estilos', n);
 }
 
+// Devuelve el nº de párrafos con texto a los que se les quitó fondo/subrayado
 function limpiarParrafos(paragraphs) {
+  let mod = 0;
   paragraphs.forEach(p => {
     if (p.getText().trim() === '') return;
 
     const esCodigo = esTextoCodigo(p);
+    const bgAntes = p.getBackgroundColor();
 
     p.setSpacingBefore(0);
     p.setSpacingAfter(CONFIG.ESPACIO_DESPUES);
@@ -178,7 +190,10 @@ function limpiarParrafos(paragraphs) {
         // Ignorar párrafos con elementos especiales
       }
     }
+
+    if (bgAntes !== null) mod++;
   });
+  return mod;
 }
 
 // ==========================================
@@ -195,7 +210,7 @@ function recortarEspaciosLaterales() {
   let n = 0;
   let nTrim = 0;
 
-  body.getParagraphs().forEach(p => {
+  parrafosObjetivo(body).forEach(p => {
     if (estaEnTablaCodeBlock(p)) return;
     const enDatos = estaEnTablaDatos(p);
     if (!enDatos && CONFIG.IGNORAR_CODEBLOCKS_EN_FORMATO && esTextoCodigo(p)) return;
@@ -210,5 +225,6 @@ function recortarEspaciosLaterales() {
     fpLog('[Formato Pro][debug] recortarEspaciosLaterales: revisados=%s modificados=%s', n, nTrim);
   }
 
+  fpStat('espacios', nTrim);
   if (soloMenu) fpFinEjecucion('📋 Recortar espacios — logs');
 }

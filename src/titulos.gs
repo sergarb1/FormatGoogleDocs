@@ -4,8 +4,9 @@
 function procesarTitulos() {
   cargarConfiguracion();
   const body = DocumentApp.getActiveDocument().getBody();
-  const paragraphs = body.getParagraphs();
+  const paragraphs = parrafosObjetivo(body);
   const patrones = obtenerPatronesTitulo();
+  let n = 0;
 
   paragraphs.forEach(p => {
     const text = p.getText().trim();
@@ -22,18 +23,36 @@ function procesarTitulos() {
         } else if (patron.nivel === 3) {
           p.setHeading(DocumentApp.ParagraphHeading.HEADING3);
         }
+        n++;
         return;
       }
     }
   });
+
+  fpStat('titulos', n);
 }
 
 function obtenerPatronesTitulo() {
   const estilo = CONFIG.PRESET_TITULOS;
 
   if (estilo === 'PERSONALIZADO') {
-    if (CONFIG.PATRONES_PERSONALIZADOS && CONFIG.PATRONES_PERSONALIZADOS.length > 0) {
-      return CONFIG.PATRONES_PERSONALIZADOS;
+    const personalizados = CONFIG.PATRONES_PERSONALIZADOS || [];
+    if (personalizados.length > 0) {
+      // Soporta { nivel, regex: RegExp } o { nivel, regex: String }
+      return personalizados
+        .map(p => {
+          const fuente = p && p.regex instanceof RegExp
+            ? p.regex.source
+            : String((p && p.regex) || '');
+          if (!fuente) return null; // vacío: new RegExp('') casaría con todo
+          try {
+            return { nivel: p.nivel, regex: new RegExp(fuente) };
+          } catch (e) {
+            fpLog('[Formato Pro] Patrón personalizado inválido (nivel %s): %s', p && p.nivel, fuente);
+            return null;
+          }
+        })
+        .filter(p => p !== null);
     }
     return PRESETS_TITULOS.GUION_LARGO;
   }

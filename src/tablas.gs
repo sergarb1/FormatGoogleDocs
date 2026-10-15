@@ -6,7 +6,8 @@ function procesarTablas() {
   const soloMenu = !FP_EN_TOTAL;
   if (soloMenu) fpLimpiarLogs();
 
-  const tables = DocumentApp.getActiveDocument().getBody().getTables();
+  const body = DocumentApp.getActiveDocument().getBody();
+  const tables = tablasObjetivo(body);
   let nDatos = 0;
   let nCode = 0;
   let nErrBorde = 0;
@@ -58,7 +59,7 @@ function procesarTablas() {
         }
 
         if (esCabecera) {
-          cell.setBackgroundColor('#dadce0');
+          cell.setBackgroundColor(CONFIG.CABECERA_TABLA_COLOR);
         } else {
           cell.setBackgroundColor(null);
         }
@@ -126,18 +127,25 @@ function procesarTablas() {
 
   // Bordes fuertes vía Docs API (una petición por tabla de datos).
   // Nunca debe tumbar procesarTablas: si Docs API no puede tocar este documento,
-  // los bordes de DocumentApp de arriba ya están aplicados.
+  // se desactiva sola para este documento (DocumentProperties) y no se reintenta.
   let docsApiOk = 0;
   let docsApiErr = 0;
-  if (CONFIG.USAR_DOCS_API_BORDES && indicesDatos.length > 0) {
+  if (CONFIG.USAR_DOCS_API_BORDES && indicesDatos.length > 0 && !docsApiDeshabilitada()) {
     try {
       const res = aplicarBordesDocsApi(indicesDatos);
       docsApiOk = res.ok;
       docsApiErr = res.err;
     } catch (eApi) {
       docsApiErr = indicesDatos.length;
-      fpLog('[Formato Pro] Docs API de bordes omitida (DocumentApp sí la aplicó): %s', eApi);
-      fpLog('[Formato Pro] Puedes desactivar «Borde negro fino (Docs API)» en ⚙️ Configurar… si este documento no deja acceso a la API.');
+      docsApiDeshabilitar();
+      fpLog('[Formato Pro] Docs API de bordes omitida (DocumentApp sí la aplicó). Se desactiva para este documento.');
+      if (CONFIG.DEBUG_TABLAS) {
+        fpLog('[Formato Pro][debug] Docs API error: %s', eApi);
+      }
+    }
+  } else if (CONFIG.USAR_DOCS_API_BORDES && docsApiDeshabilitada()) {
+    if (CONFIG.DEBUG_TABLAS) {
+      fpLog('[Formato Pro][debug] Docs API de bordes ya desactivada en este documento.');
     }
   }
 
@@ -146,12 +154,39 @@ function procesarTablas() {
       tables.length, nDatos, nCode, nParr, nSinParr, nErrBorde, docsApiOk, docsApiErr);
   }
 
+  fpStat('tablas', nDatos);
   if (soloMenu) fpFinEjecucion('📋 Formatear tablas — logs');
+}
+
+// Docs API de bordes: si falla el acceso a un documento (p. ej. unidad
+// compartida), se desactiva SOLO en ese documento para no reintentar en cada
+// ejecución. Se reactiva al guardar la configuración con la casilla marcada.
+const FP_DOCS_API_OFF_KEY = 'FP_DOCS_API_OFF';
+
+function docsApiDeshabilitada() {
+  try {
+    return PropertiesService.getDocumentProperties().getProperty(FP_DOCS_API_OFF_KEY) === '1';
+  } catch (e) {
+    return false;
+  }
+}
+
+function docsApiDeshabilitar() {
+  try {
+    PropertiesService.getDocumentProperties().setProperty(FP_DOCS_API_OFF_KEY, '1');
+  } catch (e) {}
+}
+
+function docsApiReactivar() {
+  try {
+    PropertiesService.getDocumentProperties().deleteProperty(FP_DOCS_API_OFF_KEY);
+  } catch (e) {}
 }
 
 // Aplica bordes de CONFIG.BORDE_TABLA_* a tablas de datos con Docs API
 // (updateTableCellStyle). Devuelve {ok, err}. Nunca lanza: si la API no puede
-// acceder al documento (p. ej. «Service Documents failed…»), se omite y se avisa.
+// acceder al documento (p. ej. «Service Documents failed…»), se omite, se
+// desactiva para este documento y se avisa una sola vez.
 function aplicarBordesDocsApi(tablasDatos) {
   const out = { ok: 0, err: 0 };
   try {
@@ -173,8 +208,12 @@ function aplicarBordesDocsApi(tablasDatos) {
       startIdxs = indicesTablasInicio(docId);
     } catch (eGet) {
       out.err = tablasDatos.length;
-      fpLog('[Formato Pro] Docs API sin acceso a este documento: %s', eGet);
-      fpLog('[Formato Pro] Bordes ya aplicados con DocumentApp. Si quieres la API: Servicios → Google Docs API y vuelve a autorizar; o desmárcalo en ⚙️.');
+      docsApiDeshabilitar();
+      fpLog('[Formato Pro] Docs API sin acceso a este documento → bordes solo con DocumentApp y API desactivada aquí (no se reintentará).');
+      fpLog('[Formato Pro] Para reactivarla: ⚙️ Configurar… → marca «Borde negro fino (Docs API)» y guarda.');
+      if (CONFIG.DEBUG_TABLAS) {
+        fpLog('[Formato Pro][debug] Docs Documents.get: %s', eGet);
+      }
       return out;
     }
 
@@ -228,7 +267,11 @@ function aplicarBordesDocsApi(tablasDatos) {
     return out;
   } catch (eFatal) {
     out.err = tablasDatos.length;
-    fpLog('[Formato Pro] Docs API omitida sin tumbar el formateo: %s', eFatal);
+    docsApiDeshabilitar();
+    fpLog('[Formato Pro] Docs API omitida sin tumbar el formateo; desactivada para este documento.');
+    if (CONFIG.DEBUG_TABLAS) {
+      fpLog('[Formato Pro][debug] Docs API fatal: %s', eFatal);
+    }
     return out;
   }
 }

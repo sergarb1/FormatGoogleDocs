@@ -13,13 +13,15 @@ Script de **Google Apps Script** que limpia y normaliza documentos de Google Doc
   - Mixto: punto + guion + Markdown
   - O expresiones regulares personalizadas (`PERSONALIZADO`)
 - **Cuerpo de texto** por defecto: **Calibri 12, justificado**, interlineado 1.15 (todo configurable)
-- **Tablas de datos**: trim de espacios/tabs en celdas (tabs intermedios → espacio), cabecera en **negrita + centrada + gris** (`#dadce0`), resto **justificado y sin fondo**, **cuadrícula con borde fino y negro** vía DocumentApp + Docs API, **interlineado de celdas 1.5** (independiente del cuerpo), tabla al **ancho útil de página** con columnas proporcionales al contenido (ignora tablas 1×1)
+- **Tablas de datos**: trim de espacios/tabs en celdas (tabs intermedios → espacio), cabecera en **negrita + centrada + gris configurable** (`#dadce0`), resto **justificado y sin fondo**, **cuadrícula con borde fino y negro** vía DocumentApp + Docs API, **interlineado de celdas 1.5** (independiente del cuerpo), tabla al **ancho útil de página** con columnas proporcionales al contenido (ignora tablas 1×1). Si la Docs API no puede tocar un documento (p. ej. unidad compartida), se **desactiva sola en ese documento** y los bordes siguen aplicándose con DocumentApp
 - **Protección de CodeBlocks**: detecta tablas 1×1 y fuentes monoespaciadas (`Consolas`, `Courier New`, `Roboto Mono`, `Fira Code`, `JetBrains Mono`…) y no les aplica formato de cuerpo ni recorte de espacios
 - **Espacios laterales**: recorta espacios/tabs sueltos (por code points, no solo `String.trim`) a izquierda y derecha en párrafos del cuerpo y en celdas; en texto no código colapsa dobles+ espacios intermedios, NBSP y tabs (no toca código)
 - **Limpieza de párrafos y viñetas vacíos**: borra párrafos en blanco y viñetas sin contenido **sin mover** la línea siguiente
 - **Limpieza de estilos copiados**: fondos heredados, subrayados, tamaños de fuente dispares, espaciados de pegado — también dentro de tablas 1×1, sin romper la monoespaciada del código
-- **Diálogo de configuración** (secciones, labels, validación, feedback) para cambiar preset, tipografía, **interlineado del cuerpo (1.15)** e **interlineado de tablas (1.5)** sin tocar el código
-- **Menú agrupado** por intención: Limpieza completa + submenús 📑 Títulos / 📊 Tablas / 📝 Cuerpo + ⚙️ / 📋
+- **Diálogo de configuración** completo (títulos incl. **personalizado con regex**, cuerpo — fuente, tamaño, alineación, interlineado, espacios antes/después —, tablas — interlineado, grosor/color de borde, color de cabecera, ajuste de ancho, Docs API, tabs/espacios — y general — alerta de resumen) con validación y cierre al guardar. La config se persiste en el documento (`DocumentProperties`)
+- **Resumen al terminar**: alerta breve «✨ Listo: N títulos, M tablas, K párrafos…» tras la limpieza completa o al formatear la selección (opcional en ⚙️)
+- **Formatear solo la selección**: los mismos módulos aplicados únicamente a los párrafos/tablas seleccionados, sin tocar el resto del documento
+- **Menú agrupado** por intención: Limpieza completa + formatear selección + submenús 📑 Títulos / 📊 Tablas / 📝 Cuerpo + ⚙️ / 📋
 - **Ejecución maestra** con un solo clic
 
 ## Instalación
@@ -38,7 +40,8 @@ Script de **Google Apps Script** que limpia y normaliza documentos de Google Doc
 
 | Opción del menú | Qué hace |
 |---|---|
-| ✨ Limpieza completa (recomendado) | Ejecuta todos los módulos en orden optimizado |
+| ✨ Limpieza completa (recomendado) | Ejecuta todos los módulos en orden optimizado sobre todo el documento |
+| ✨ Formatear solo la selección | Igual que la completa, pero solo en los párrafos/tablas seleccionados |
 | 📑 Títulos y estructura → Detectar títulos | Convierte líneas que parecen títulos en H1/H2/H3 |
 | 📑 Títulos y estructura → Quitar líneas y viñetas vacías | Elimina párrafos en blanco y viñetas sin texto (la línea siguiente no se mueve) |
 | 📊 Tablas de datos → Formatear tablas | Trim en celdas, cabecera negrita/centrada/gris, borde fino y negro, interlineado de celdas 1.5, resto justificado sin fondo (ignora 1×1). La tabla ocupa el ancho útil de página y las columnas se reparten proporcionalmente al contenido |
@@ -62,17 +65,19 @@ const CONFIG = {
   ESPACIO_ANTES: 0,
   ESPACIO_DESPUES: 8,
   PRESET_TITULOS: 'GUION_LARGO', // 'GUION_LARGO' (defecto) | 'GUION' | 'GUION_CORTO' | 'PUNTO' | 'MARKDOWN' | 'MIXTO' | 'PERSONALIZADO'
-  PATRONES_PERSONALIZADOS: [], // solo si PRESET_TITULOS = 'PERSONALIZADO'
+  PATRONES_PERSONALIZADOS: [], // solo si PRESET_TITULOS = 'PERSONALIZADO' (editable en ⚙️: "NIVEL:regex" por línea)
   IGNORAR_CODEBLOCKS_EN_FORMATO: true,
   FUENTES_CODIGO: [ 'Consolas', 'Courier New', /* ... */ ],
   TRATAR_TABLA_1X1_COMO_CODIGO: true,
   BORDE_TABLA_GROSOR: 1, // puntos (cuadrícula de tablas de datos)
   BORDE_TABLA_COLOR: '#000000',
+  CABECERA_TABLA_COLOR: '#dadce0', // fondo de la fila de cabecera
   USAR_DOCS_API_BORDES: true, // Docs API updateTableCellStyle (requiere servicio Docs)
   NORMALIZAR_TABS_EN_CELDAS: true, // \t intermedio en texto normal → espacio
   COLAPSAR_ESPACIOS_EN_CELDAS: true, // dobles+/NBSP intermedios en texto normal → un espacio
   INTERLINEADO_TABLA: 1.5, // interlineado de celdas de tablas de datos (independiente del cuerpo)
   AJUSTAR_DIMENSIONES_TABLA: true, // tabla = ancho de página; columnas proporcionales al contenido
+  MOSTRAR_RESUMEN: true, // alerta «✨ Listo: …» al terminar limpieza/selección
   DEBUG_TIEMPOS: false, // tiempos por módulo (solo si reactivas el diálogo de logs)
   DEBUG_TABLAS: false, // logs de tablas/trim/Docs API
   DEBUG_MOSTRAR_DIALOGO: false // no abrir diálogo al terminar; logs solo vía 📋 Ver resumen
@@ -80,6 +85,16 @@ const CONFIG = {
 ```
 
 ### Personalizar regex de títulos
+
+**Desde ⚙️ (recomendado):** elige *Personalizado* en el desplegable y escribe un patrón por línea con formato `NIVEL:expresión` (nivel 1, 2 o 3):
+
+```
+1:CAP[IÍ]TULO\s+\d+
+2:^##\s+
+3:^\d+\.\d+\.\d+\s+
+```
+
+**Desde el código** (`PATRONES_PERSONALIZADOS` en [`src/config.gs`](src/config.gs)):
 
 ```javascript
 PRESET_TITULOS: 'PERSONALIZADO',
