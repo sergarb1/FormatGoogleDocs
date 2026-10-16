@@ -110,6 +110,9 @@ function procesarTablas() {
             paragraph.setBold(false);
             paragraph.setAlignment(DocumentApp.HorizontalAlignment.JUSTIFY);
           }
+          if (CONFIG.NORMALIZAR_COLOR_TEXTO && !esTextoCodigo(paragraph)) {
+            paragraph.setForegroundColor(CONFIG.TEXTO_COLOR);
+          }
         });
       }
     }

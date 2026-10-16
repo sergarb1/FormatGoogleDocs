@@ -17,6 +17,11 @@ const CONFIG = {
   ESPACIO_ANTES: 0,
   ESPACIO_DESPUES: 8,
 
+  // Texto en color sólido: elimina azules/verdes heredados al pegar HTML.
+  // Pinta cuerpo, títulos y celdas. El código monoespaciado no se toca.
+  NORMALIZAR_COLOR_TEXTO: true,
+  TEXTO_COLOR: '#000000',
+
   // Preset de detección de títulos.
   // DEFECTO = 'GUION_LARGO' (solo "—" / "–").
   // 'GUION' = ambos tipos (largo y corto "-").
@@ -96,8 +101,8 @@ const FP_CONFIG_CLAVES = [
   'CABECERA_TABLA_COLOR',
   'NORMALIZAR_TABS_EN_CELDAS',
   'COLAPSAR_ESPACIOS_EN_CELDAS',
-  'ESPACIO_ANTES',
-  'ESPACIO_DESPUES',
+  'NORMALIZAR_COLOR_TEXTO',
+  'TEXTO_COLOR',
   'MOSTRAR_RESUMEN',
   'DEBUG_TIEMPOS',
   'DEBUG_TABLAS',

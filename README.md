@@ -64,6 +64,8 @@ const CONFIG = {
   INTERLINEADO: 1.15, // solo cuerpo (fuera de tablas)
   ESPACIO_ANTES: 0,
   ESPACIO_DESPUES: 8,
+  NORMALIZAR_COLOR_TEXTO: true, // todo el texto a color sólido (quita azules/verdes heredados); el código no se toca
+  TEXTO_COLOR: '#000000', // color aplicado por NORMALIZAR_COLOR_TEXTO
   PRESET_TITULOS: 'GUION_LARGO', // 'GUION_LARGO' (defecto) | 'GUION' | 'GUION_CORTO' | 'PUNTO' | 'MARKDOWN' | 'MIXTO' | 'PERSONALIZADO'
   PATRONES_PERSONALIZADOS: [], // solo si PRESET_TITULOS = 'PERSONALIZADO' (editable en ⚙️: "NIVEL:regex" por línea)
   IGNORAR_CODEBLOCKS_EN_FORMATO: true,

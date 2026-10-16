@@ -23,6 +23,10 @@ function procesarTitulos() {
         } else if (patron.nivel === 3) {
           p.setHeading(DocumentApp.ParagraphHeading.HEADING3);
         }
+        // setHeading puede reactivar el color de tema (azul): fijar color sólido
+        if (CONFIG.NORMALIZAR_COLOR_TEXTO) {
+          p.setForegroundColor(CONFIG.TEXTO_COLOR);
+        }
         n++;
         return;
       }

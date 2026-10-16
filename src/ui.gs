@@ -245,6 +245,17 @@ function mostrarDialogoConfig() {
             <div class="err" id="err-espacioDespues">Entre 0 y 72</div>
           </div>
         </div>
+        <label class="check">
+          <input type="checkbox" id="colorTextoAct" ${CONFIG.NORMALIZAR_COLOR_TEXTO ? 'checked' : ''} />
+          <span>Texto en color sólido (sin azules ni verdes)
+            <span class="hint">Pinta cuerpo, títulos y celdas del color de abajo. El código monoespaciado no se toca.</span>
+          </span>
+        </label>
+        <div class="field" style="max-width: 130px;">
+          <label for="colorTexto">Color de texto</label>
+          <input id="colorTexto" type="text" value="${CONFIG.TEXTO_COLOR}" />
+          <div class="err" id="err-colorTexto">Formato #rrggbb</div>
+        </div>
       </fieldset>
 
       <fieldset>
@@ -362,6 +373,7 @@ function mostrarDialogoConfig() {
         const grosor = parseFloat(document.getElementById('grosorBorde').value);
         const cBorde = document.getElementById('colorBorde').value.trim();
         const cCab = document.getElementById('colorCabecera').value.trim();
+        const cTexto = document.getElementById('colorTexto').value.trim();
 
         ok = marcarError('fuente', !fuente) && ok;
         ok = marcarError('tamano', !(tamano >= 6 && tamano <= 72)) && ok;
@@ -372,11 +384,12 @@ function mostrarDialogoConfig() {
         ok = marcarError('grosorBorde', !(grosor >= 0 && grosor <= 6)) && ok;
         ok = marcarError('colorBorde', !esHex(cBorde)) && ok;
         ok = marcarError('colorCabecera', !esHex(cCab)) && ok;
+        ok = marcarError('colorTexto', !esHex(cTexto)) && ok;
         ok = validarPatrones() && ok;
         return ok;
       }
 
-      ['tamano', 'interlineado', 'interlineadoTabla', 'fuente', 'espacioAntes', 'espacioDespues', 'grosorBorde', 'colorBorde', 'colorCabecera'].forEach(function(id) {
+      ['tamano', 'interlineado', 'interlineadoTabla', 'fuente', 'espacioAntes', 'espacioDespues', 'grosorBorde', 'colorBorde', 'colorCabecera', 'colorTexto'].forEach(function(id) {
         document.addEventListener('DOMContentLoaded', function() {
           const el = document.getElementById(id);
           if (el) el.addEventListener('blur', validar);
@@ -393,6 +406,8 @@ function mostrarDialogoConfig() {
         document.getElementById('interlineado').value = 1.15;
         document.getElementById('espacioAntes').value = 0;
         document.getElementById('espacioDespues').value = 8;
+        document.getElementById('colorTextoAct').checked = true;
+        document.getElementById('colorTexto').value = '#000000';
         document.getElementById('interlineadoTabla').value = 1.5;
         document.getElementById('grosorBorde').value = 1;
         document.getElementById('colorBorde').value = '#000000';
@@ -430,6 +445,8 @@ function mostrarDialogoConfig() {
           interlineado: document.getElementById('interlineado').value,
           espacioAntes: document.getElementById('espacioAntes').value,
           espacioDespues: document.getElementById('espacioDespues').value,
+          colorTextoAct: document.getElementById('colorTextoAct').checked,
+          colorTexto: document.getElementById('colorTexto').value.trim(),
           interlineadoTabla: document.getElementById('interlineadoTabla').value,
           grosorBorde: document.getElementById('grosorBorde').value,
           colorBorde: document.getElementById('colorBorde').value.trim(),
@@ -528,6 +545,8 @@ function aplicarConfiguracion(datos) {
     if (typeof datos.ajustarDim === 'boolean') CONFIG.AJUSTAR_DIMENSIONES_TABLA = datos.ajustarDim;
     if (typeof datos.normalizarTabs === 'boolean') CONFIG.NORMALIZAR_TABS_EN_CELDAS = datos.normalizarTabs;
     if (typeof datos.colapsarEspacios === 'boolean') CONFIG.COLAPSAR_ESPACIOS_EN_CELDAS = datos.colapsarEspacios;
+    if (typeof datos.colorTextoAct === 'boolean') CONFIG.NORMALIZAR_COLOR_TEXTO = datos.colorTextoAct;
+    if (datos.colorTexto) CONFIG.TEXTO_COLOR = String(datos.colorTexto);
     if (typeof datos.mostrarResumen === 'boolean') CONFIG.MOSTRAR_RESUMEN = datos.mostrarResumen;
     if (typeof datos.docsBordes === 'boolean') {
       CONFIG.USAR_DOCS_API_BORDES = datos.docsBordes;
