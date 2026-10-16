@@ -37,6 +37,7 @@ Script modular en GAS para **limpiar y normalizar documentos** generados al copi
     - Nombrar la función con verbo en infinitivo español (`procesarX`, `limpiarX`, `aplicarX`)
     - Actualizar la tabla del `README.md`
 13. **Compatibilidad multi-fichero:** el script vive en varios `.gs` bajo `src/` (pedido explícito del usuario). `clasp push` con `rootDir: src` los sube todos; GAS comparte el ámbito global entre ficheros. El orden de carga no se asume: no usar inicializaciones que dependan de constantes de otro fichero en tiempo de carga (solo en tiempo de ejecución). Para pegado manual en el editor, concatenar en este orden: `config`, `utilidades`, `logs`, `titulos`, `tablas`, `cuerpo`, `ui`.
+14. **Orden de la limpieza total y celdas:** `body.getParagraphs()` **incluye** los párrafos de las celdas de tablas. Por eso `normalizarCuerpo()` y `aplicarFuenteCuerpo()` deben saltarlos con `if (estaEnTablaCodeBlock(p) || estaEnTablaDatos(p)) return;` (el formato de celdas lo decide `procesarTablas()`). Y `procesarTablas()` va **siempre el último** en `ejecutarLimpiezaTotal()`/`formatearSeleccion()` (tras `normalizarCuerpo`): el centrado de cabeceras, el interlineado de celdas y el ancho de tabla deben prevalecer.
 
 ## Mapa de módulos
 
@@ -47,13 +48,13 @@ Script modular en GAS para **limpiar y normalizar documentos** generados al copi
 | `onOpen()` | `src/ui.gs` | UI | Menú `⚡ Formato Pro` con submenús 📑/📊/📝 + ⚙️/📋 |
 | `procesarTitulos()` | `src/titulos.gs` | módulo 1 | Aplica H1/H2/H3 según presets/regex |
 | `obtenerPatronesTitulo()` | `src/titulos.gs` | util | Resuelve qué regex usar según `CONFIG.PRESET_TITULOS` |
-| `procesarTablas()` | `src/tablas.gs` | módulo 2 | Formatea tablas de datos, borde fino/negro, Docs API, ignora 1x1 |
+| `procesarTablas()` | `src/tablas.gs` | módulo 2 | Formatea tablas de datos, borde fino/negro, Docs API, ignora 1x1. **Último módulo** en limpieza/selección (tras normalizarCuerpo) |
 | `aplicarBordesDocsApi(tablas)` | `src/tablas.gs` | util | Bordes vía Docs API `updateTableCellStyle` + `tableStartLocation.index` (batch) |
 | `indicesTablasInicio(docId)` | `src/tablas.gs` | util | `startIndex` UTF-16 de tablas de primer nivel (`Docs.Documents.get`) |
 | `ajustarDimensionesTabla(table)` | `src/tablas.gs` | util | Tabla = ancho de página; columnas proporcionales al contenido; filas sin min-height |
 | `hexARgb(hex)` | `src/tablas.gs` | util | `#000000` → `{red,green,blue}` 0–1 para Docs API |
-| `normalizarCuerpo()` | `src/cuerpo.gs` | módulo 3 | Fuente, tamaño, alineación, interlineado del texto normal |
-| `aplicarFuenteCuerpo()` | `src/cuerpo.gs` | módulo 4 | Solo tipografía/alineación del cuerpo |
+| `normalizarCuerpo()` | `src/cuerpo.gs` | módulo 3 | Fuente, tamaño, alineación, interlineado del texto normal (**no** toca párrafos de tablas/celdas) |
+| `aplicarFuenteCuerpo()` | `src/cuerpo.gs` | módulo 4 | Solo tipografía/alineación del cuerpo (no toca celdas) |
 | `eliminarParrafosVacios()` | `src/cuerpo.gs` | módulo 5 | Borra párrafos solo-blancos (code points) y `LIST_ITEM` vacíos (sin mover el siguiente) |
 | `limpiarEstilosCopiados()` | `src/cuerpo.gs` | módulo 6 | Limpia fondos, subrayados, tamaños heredados (incl. tablas 1x1) |
 | `limpiarParrafos()` | `src/cuerpo.gs` | aux módulo 6 | Lógica por párrafo; distingue código vs normal |

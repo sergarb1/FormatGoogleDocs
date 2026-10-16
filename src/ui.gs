@@ -606,12 +606,14 @@ function ejecutarLimpiezaTotal() {
     procesarTitulos();
     fin();
 
-    fin = marcar('procesarTablas');
-    procesarTablas();
-    fin();
-
     fin = marcar('normalizarCuerpo');
     normalizarCuerpo();
+    fin();
+
+    // Siempre el último: el centrado de cabeceras, el interlineado de celdas
+    // y el ancho de tabla deben prevalecer sobre el formato de cuerpo.
+    fin = marcar('procesarTablas');
+    procesarTablas();
     fin();
   } finally {
     FP_AMBITO_SELECCION = null;
@@ -651,8 +653,8 @@ function formatearSeleccion() {
     limpiarEstilosCopiados();
     recortarEspaciosLaterales();
     procesarTitulos();
-    procesarTablas();
     normalizarCuerpo();
+    procesarTablas(); // último: centrado/interlineado/ancho de tablas prevalece
   } finally {
     FP_AMBITO_SELECCION = null;
     FP_EN_TOTAL = false;

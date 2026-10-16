@@ -8,6 +8,10 @@ function normalizarCuerpo() {
   let n = 0;
 
   paragraphs.forEach(p => {
+    // body.getParagraphs() incluye párrafos de celdas: el formato de tablas
+    // (cabecera centrada, interlineado 1.5…) lo decide procesarTablas, aquí no.
+    if (estaEnTablaCodeBlock(p) || estaEnTablaDatos(p)) return;
+
     const heading = p.getHeading();
     const esNormal = heading === DocumentApp.ParagraphHeading.NORMAL;
     const tieneTexto = p.getText().length > 0;
@@ -37,6 +41,8 @@ function aplicarFuenteCuerpo() {
   const paragraphs = parrafosObjetivo(body);
 
   paragraphs.forEach(p => {
+    // Igual que normalizarCuerpo: las celdas no se tocan aquí
+    if (estaEnTablaCodeBlock(p) || estaEnTablaDatos(p)) return;
     if (p.getHeading() !== DocumentApp.ParagraphHeading.NORMAL) return;
     if (p.getText().length === 0) return;
     if (CONFIG.IGNORAR_CODEBLOCKS_EN_FORMATO && esTextoCodigo(p)) return;
